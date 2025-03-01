@@ -1,32 +1,32 @@
-package parse
+package script
 
 import (
 	"fmt"
 	"strings"
 )
 
-type AstRender struct {
+type TypeDisplay struct {
 	Sink   *strings.Builder
 	indent int
 }
 
-func (this *AstRender) fprint(msg string) {
+func (this *TypeDisplay) fprint(msg string) {
 	this.Sink.WriteString(msg)
 }
 
-func (this *AstRender) fprintf(msg string, v ...any) {
+func (this *TypeDisplay) fprintf(msg string, v ...any) {
 	fmt.Fprintf(this.Sink, msg, v...)
 }
 
-func (this *AstRender) fprintln(msg ...any) {
+func (this *TypeDisplay) fprintln(msg ...any) {
 	fmt.Fprintln(this.Sink, msg...)
 }
 
-func (this *AstRender) writeindent() {
+func (this *TypeDisplay) writeindent() {
 	this.Sink.WriteString(strings.Repeat("  ", this.indent))
 }
 
-func (this *AstRender) VisitFindNode(node *FindNode) {
+func (this *TypeDisplay) VisitFindNode(node *FindNode) {
 	this.fprintln("find [ ")
 	this.indent++
 	for i := range node.Finding {
@@ -51,10 +51,10 @@ func (this *AstRender) VisitFindNode(node *FindNode) {
 		this.fprintln()
 	}
 	this.indent--
-	this.fprintln("]")
+	this.fprintf("] %s\n", node.GetType())
 }
 
-func (this *AstRender) VisitInsertNode(node *InsertNode) {
+func (this *TypeDisplay) VisitInsertNode(node *InsertNode) {
 	this.fprintln("insert [ ")
 	this.indent++
 	for i := range node.Inserting {
@@ -79,30 +79,30 @@ func (this *AstRender) VisitInsertNode(node *InsertNode) {
 		this.fprintln()
 	}
 	this.indent--
-	this.fprintln("]")
+	this.fprintf("] %s\n", node.GetType())
 }
 
-func (this *AstRender) visitTriplet(node TripletNode) {
+func (this *TypeDisplay) visitTriplet(node TripletNode) {
 	this.fprint("[ ")
 	this.VisitValueNode(node.Id)
 	this.fprint(" ")
 	this.VisitValueNode(node.Attribute)
 	this.fprint(" ")
-	this.VisitValueNode(node.Value)
-	this.fprint(" ]")
+	this.VisitValueNode(node.Predicate)
+	this.fprintf(" ] %s", node.GetType())
 }
 
-func (this *AstRender) VisitInsertTripletNode(node *InsertTripletNode) {
+func (this *TypeDisplay) VisitInsertTripletNode(node *InsertTripletNode) {
 	this.visitTriplet(node.TripletNode)
 }
 
-func (this *AstRender) VisitRuleDeclNode(node *RuleDeclNode) {
+func (this *TypeDisplay) VisitRuleDeclNode(node *RuleDeclNode) {
 	this.fprintf("[ %s ", node.Name)
-	for i := range node.Args {
-		this.VisitVarNode(node.Args[i])
+	for i := range node.Params {
+		this.VisitVarNode(node.Params[i])
 		this.fprint(" ")
 	}
-	this.fprintf("] [\n")
+	this.fprintf("] %s [\n", node.GetType())
 	this.indent++
 	for i := range node.Clauses {
 		this.writeindent()
@@ -113,7 +113,7 @@ func (this *AstRender) VisitRuleDeclNode(node *RuleDeclNode) {
 	this.fprintln("]")
 }
 
-func (this *AstRender) VisitClauseNode(node ClauseNode) {
+func (this *TypeDisplay) VisitClauseNode(node ClauseNode) {
 	switch node := node.(type) {
 	case *RuleClauseNode:
 		this.VisitRuleClauseNode(node)
@@ -122,24 +122,24 @@ func (this *AstRender) VisitClauseNode(node ClauseNode) {
 	}
 }
 
-func (this *AstRender) VisitTripletClauseNode(node *TripletClauseNode) {
+func (this *TypeDisplay) VisitTripletClauseNode(node *TripletClauseNode) {
 	this.visitTriplet(node.TripletNode)
 }
 
-func (this *AstRender) VisitRuleClauseNode(node *RuleClauseNode) {
+func (this *TypeDisplay) VisitRuleClauseNode(node *RuleClauseNode) {
 	this.fprintf("[ %s ", node.Name)
 	for i := range node.Args {
 		this.VisitValueNode(node.Args[i])
 		this.fprint(" ")
 	}
-	this.fprintf("]")
+	this.fprintf("] %s", node.GetType())
 }
 
-func (this *AstRender) VisitAttrNode(node *AttrNode) {
-	this.fprintf("%s", node.Name)
+func (this *TypeDisplay) VisitAttrNode(node *AttrNode) {
+	this.fprintf("%s", node.GetType())
 }
 
-func (this *AstRender) VisitValueNode(node ValueNode) {
+func (this *TypeDisplay) VisitValueNode(node ValueNode) {
 	switch node := node.(type) {
 	case *StringNode:
 		this.VisitStringNode(node)
@@ -156,26 +156,25 @@ func (this *AstRender) VisitValueNode(node ValueNode) {
 	}
 }
 
-func (this *AstRender) VisitVarNode(node *VarNode) {
-	this.fprintf("$%s", node.Name)
+func (this *TypeDisplay) VisitVarNode(node *VarNode) {
+	this.fprintf("(%s %s)", node.Name, node.GetType())
 }
 
-func (this *AstRender) VisitEntityNode(node *EntityNode) {
+func (this *TypeDisplay) VisitEntityNode(node *EntityNode) {
 	if node.Var != nil {
-		this.VisitVarNode(node.Var)
-	} else {
-		this.fprintf("%d", node.Value)
+		this.fprintf("%s ", node.Var.Name)
 	}
+	this.fprintf("%s", node.GetType())
 }
 
-func (this *AstRender) VisitNumber(node *NumberNode) {
-	this.fprintf("%f", node.Value)
+func (this *TypeDisplay) VisitNumber(node *NumberNode) {
+	this.fprintf("%s", node.GetType())
 }
 
-func (this *AstRender) VisitBoolNode(node *BoolNode) {
-	this.fprintf("%t", node.Value)
+func (this *TypeDisplay) VisitBoolNode(node *BoolNode) {
+	this.fprintf("%s", node.GetType())
 }
 
-func (this *AstRender) VisitStringNode(node *StringNode) {
-	this.fprintf("%s", node.Value)
+func (this *TypeDisplay) VisitStringNode(node *StringNode) {
+	this.fprintf("%s", node.GetType())
 }

@@ -1,4 +1,4 @@
-package parse
+package script
 
 import (
 	"sync"
@@ -15,6 +15,16 @@ var _ ValueNode = (*EntityNode)(nil)
 var _ ValueNode = (*BoolNode)(nil)
 var _ ValueNode = (*NumberNode)(nil)
 var _ ValueNode = (*StringNode)(nil)
+var _ ValueNode = (*AttrNode)(nil)
+
+func GetTypes[T AstNode](nodes []T) []Type {
+	tys := make([]Type, len(nodes))
+	for i := range tys {
+		tys[i] = nodes[i].GetType()
+	}
+
+	return tys
+}
 
 type AttrId uint32
 type AstKind uint8
@@ -33,23 +43,6 @@ type ClauseNode interface {
 type QueryNode interface {
 	AstNode
 	isQuery()
-}
-
-type AstVisitor interface {
-	VisitFindNode(*FindNode)
-	VisitInsertNode(*InsertNode)
-	VisitInsertTripletNode(*InsertTripletNode)
-	VisitRuleDeclNode(*RuleDeclNode)
-	VisitClauseNode(ClauseNode)
-	VisitTripletClauseNode(*TripletClauseNode)
-	VisitRuleClauseNode(*RuleClauseNode)
-	VisitAttrNode(*AttrNode)
-	VisitValueNode(ValueNode)
-	VisitVarNode(*VarNode)
-	VisitEntityNode(*EntityNode)
-	VisitNumber(*NumberNode)
-	VisitBoolNode(*BoolNode)
-	VisitStringNode(*StringNode)
 }
 
 const (
@@ -137,7 +130,7 @@ type RuleDeclNode struct {
 	Type    Type
 	Env     AstEnv
 	Name    string
-	Args    []*VarNode
+	Params  []*VarNode
 	Clauses []ClauseNode
 }
 
@@ -153,7 +146,7 @@ type TripletNode struct {
 	Type      Type
 	Id        *EntityNode
 	Attribute *AttrNode
-	Value     ValueNode
+	Predicate ValueNode
 }
 
 func (this *TripletNode) GetType() Type {

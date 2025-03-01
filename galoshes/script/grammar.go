@@ -1,4 +1,4 @@
-package parse
+package script
 
 import (
 	"errors"
@@ -109,7 +109,7 @@ func astParseRuleDecl(p *Parser) (*RuleDeclNode, error) {
 		return nil, traceErr(err, "ruledecl.Args."+decl.Name)
 	}
 
-	decl.Args = args
+	decl.Params = args
 	clauses, clausesErr := astParseClauses(p)
 	if clausesErr != nil {
 		return nil, traceErr(clausesErr, "ruledecl.Clauses."+decl.Name)
@@ -207,7 +207,7 @@ func astParseTriplet(p *Parser) (TripletNode, error) {
 
 	triplet.Id = entity
 	triplet.Attribute = attr
-	triplet.Value = value
+	triplet.Predicate = value
 	assert(p.Cur.Is(TOKEN_CLOSE_BRACKET), "expected to end on close bracket")
 	return triplet, nil
 }

@@ -1,4 +1,4 @@
-package parse
+package script
 
 import (
 	"strings"
@@ -40,8 +40,10 @@ rules [
 		t.Fatal("failed to parse find")
 	}
 
-	ta := NewAnnotator()
-	ta.VisitFindNode(find)
+	subs := make(Substitutions, 16)
+	if err := Annotate(find, NewAstEnv(), subs); err != nil {
+		t.Fatalf("failed to annotate: %s", err)
+	}
 	ts := TypeDisplay{Sink: &strings.Builder{}}
 	ts.VisitFindNode(find)
 	t.Log(ts.Sink.String())
@@ -52,8 +54,9 @@ rules [
 
 	expected := TypeTuple{[]Type{TypeNumber{}, TypeString{}}}
 	originalFind := find.Type
-	subber := subber{ta.Substitutions}
-	subber.VisitFindNode(find)
+	if err := SubstituteTypes(find, subs); err != nil {
+		t.Fatalf("failed to substitute types: %s", err)
+	}
 	ts.Sink.Reset()
 	ts.VisitFindNode(find)
 	t.Log(ts.Sink.String())
@@ -77,13 +80,13 @@ func TestApplySubsitutions(t *testing.T) {
 		TypeVar(6): TypeString{},
 	}
 
-	shouldBeNum := Substitute(TypeVar(1), subs)
+	shouldBeNum, _ := Substitute(TypeVar(1), subs)
 	if _, isNum := shouldBeNum.(TypeNumber); !isNum {
 		t.Logf("expected to generate number binding: %#v", shouldBeNum)
 		t.FailNow()
 	}
 
-	shouldBeTT := Substitute(TypeVar(4), subs)
+	shouldBeTT, _ := Substitute(TypeVar(4), subs)
 	tt, isTT := shouldBeTT.(TypeTuple)
 	if !isTT {
 		t.Logf("expected to generate type tuple binding: %#v", shouldBeTT)
