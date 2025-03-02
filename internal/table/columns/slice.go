@@ -8,12 +8,12 @@ import (
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
 )
 
-func SliceColumn[T any]() *table.ColumnBuilder {
-	return table.BuildColumnOf[T](NewSlice())
+func SliceColumn[T any](attr string) *table.ColumnBuilder {
+	return table.BuildColumnOf[T](attr, NewSlice())
 }
 
-func SizedSliceColumn[T any](size uint32) *table.ColumnBuilder {
-	return table.BuildColumnOf[T](SizedSlice(size))
+func SizedSliceColumn[T any](attr string, size uint32) *table.ColumnBuilder {
+	return table.BuildColumnOf[T](attr, SizedSlice(size))
 }
 
 func NewSlice() *Slice {

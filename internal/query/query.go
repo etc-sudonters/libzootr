@@ -138,7 +138,7 @@ func NewEngine() (*engine, error) {
 		tbl:         table.New(),
 	}
 
-	if _, err := eng.CreateColumn(columns.BitColumnOf[Entry]()); err != nil {
+	if _, err := eng.CreateColumn(columns.BitColumnOf[Entry]("/entity")); err != nil {
 		return nil, err
 	}
 

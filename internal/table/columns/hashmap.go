@@ -55,10 +55,10 @@ func (s *Map) Membership() bitset32.Bitset {
 	return bitset32.Copy(s.members)
 }
 
-func HashMapColumn[T any]() *table.ColumnBuilder {
-	return table.BuildColumnOf[T](NewMap())
+func HashMapColumn[T any](attr string) *table.ColumnBuilder {
+	return table.BuildColumnOf[T](attr, NewMap())
 }
 
-func SizedHashMapColumn[T any](capacity uint32) *table.ColumnBuilder {
-	return table.BuildColumnOf[T](NewMapWithCapacity(capacity))
+func SizedHashMapColumn[T any](attr string, capacity uint32) *table.ColumnBuilder {
+	return table.BuildColumnOf[T](attr, NewMapWithCapacity(capacity))
 }

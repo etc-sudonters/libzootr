@@ -87,6 +87,7 @@ func New() *Table {
 		cols:    make([]ColumnData, 0),
 		rows:    make(Rows, 0),
 		indexes: make(map[ColumnId]Index, 0),
+		attrs:   make(map[string]ColumnId, 0),
 	}
 }
 
@@ -94,6 +95,15 @@ type Table struct {
 	cols    []ColumnData
 	rows    Rows
 	indexes map[ColumnId]Index
+	attrs   map[string]ColumnId
+}
+
+func (this *Table) GetColumnByAttr(attr string) (ColumnData, error) {
+	cid, exists := this.attrs[attr]
+	if !exists {
+		return ColumnData{}, fmt.Errorf("attribute %q not found", cid)
+	}
+	return this.Column(cid)
 }
 
 func (this *Table) MembersOfColumns(id ColumnId) (bitset32.Bitset, error) {
@@ -136,6 +146,7 @@ func (tbl *Table) CreateColumn(b *ColumnBuilder) (ColumnData, error) {
 	if b.index != nil {
 		tbl.indexes[id] = b.index
 	}
+	tbl.attrs[b.attr] = id
 	return col, nil
 }
 

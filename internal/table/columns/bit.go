@@ -52,20 +52,24 @@ func (m *Bit) Membership() bitset32.Bitset {
 	return bitset32.Copy(*m.members)
 }
 
-func BitColumnOf[T any]() *table.ColumnBuilder {
+func BitColumnOf[T any](attr string) *table.ColumnBuilder {
 	var t T
-	return BitColumnUsing(t)
+	return BitColumnUsing(attr, t)
 }
 
-func BitColumnUsing[T any](t T) *table.ColumnBuilder {
-	return table.BuildColumnOf[T](NewBit(t))
+func BitColumnUsing[T any](attr string, t T) *table.ColumnBuilder {
+	col := table.BuildColumnOf[T](attr, NewBit(t))
+	col.Kind = table.ColumnBoolean
+	return col
 }
 
-func SizedBitColumnOf[T any](capacity uint32) *table.ColumnBuilder {
+func SizedBitColumnOf[T any](attr string, capacity uint32) *table.ColumnBuilder {
 	var t T
-	return SizedBitColumnUsing(t, capacity)
+	return SizedBitColumnUsing(attr, t, capacity)
 }
 
-func SizedBitColumnUsing[T any](t T, capacity uint32) *table.ColumnBuilder {
-	return table.BuildColumnOf[T](NewSizedBit(t, capacity))
+func SizedBitColumnUsing[T any](attr string, t T, capacity uint32) *table.ColumnBuilder {
+	col := table.BuildColumnOf[T](attr, NewSizedBit(t, capacity))
+	col.Kind = table.ColumnBoolean
+	return col
 }

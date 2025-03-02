@@ -8,84 +8,86 @@ import (
 	"sudonters/libzootr/zecs"
 )
 
-func sizedslice[T zecs.Value](size uint32) zecs.DDL {
+func sizedslice[T zecs.Value](attr string, size uint32) zecs.DDL {
 	return func() *table.ColumnBuilder {
-		return columns.SizedSliceColumn[T](size)
+		return columns.SizedSliceColumn[T](attr, size)
 	}
 }
 
-func sizedbit[T zecs.Value](size uint32) zecs.DDL {
+func sizedbit[T zecs.Value](attr string, size uint32) zecs.DDL {
 	return func() *table.ColumnBuilder {
-		return columns.SizedBitColumnOf[T](size)
+		return columns.SizedBitColumnOf[T](attr, size)
 	}
 }
 
-func sizedhash[T zecs.Value](capacity uint32) zecs.DDL {
+func sizedhash[T zecs.Value](attr string, capacity uint32) zecs.DDL {
 	return func() *table.ColumnBuilder {
-		return columns.SizedHashMapColumn[T](capacity)
+		return columns.SizedHashMapColumn[T](attr, capacity)
+	}
+}
+
+func withattr(attr string, build func(string) *table.ColumnBuilder) zecs.DDL {
+	return func() *table.ColumnBuilder {
+		return build(attr)
 	}
 }
 
 func staticddl() []zecs.DDL {
 	return []zecs.DDL{
-		sizedslice[components.Name](9000),
-		sizedbit[components.PlacementLocationMarker](5000),
-		sizedhash[symbols.Kind](5000),
-		sizedhash[components.Ptr](5000),
+		sizedslice[components.Name]("/name", 9000),
+		sizedbit[components.PlacementLocationMarker]("/world/placement", 5000),
+		sizedhash[symbols.Kind]("/entity/kind", 5000),
+		sizedhash[components.Ptr]("/entity/ptr", 5000),
 
-		sizedhash[components.RuleParsed](4000),
-		sizedhash[components.RuleOptimized](4000),
-		sizedhash[components.RuleCompiled](4000),
-		sizedhash[components.EdgeKind](4000),
-		sizedhash[components.Connection](4000),
-		sizedhash[components.RuleSource](4000),
-		sizedhash[components.DefaultPlacement](2200),
+		sizedhash[components.RuleParsed]("/logic/rule/parsed", 4000),
+		sizedhash[components.RuleOptimized]("/logic/rule/optimized", 4000),
+		sizedhash[components.RuleCompiled]("/logic/rule/compiled", 4000),
+		sizedhash[components.EdgeKind]("/world/connection/kind", 4000),
+		sizedhash[components.Connection]("/world/connection", 4000),
+		sizedhash[components.RuleSource]("/logic/rule/source", 4000),
+		sizedhash[components.DefaultPlacement]("/world/placement/default", 2200),
 
-		columns.HashMapColumn[components.CollectablePriority],
-		columns.HashMapColumn[components.HoldsToken],
-		columns.HashMapColumn[components.HintRegion],
-		columns.HashMapColumn[components.AltHintRegion],
-		columns.HashMapColumn[components.DungeonName],
-		columns.HashMapColumn[components.Savewarp],
-		columns.HashMapColumn[components.Scene],
-		columns.HashMapColumn[components.ScriptDecl],
-		columns.HashMapColumn[components.ScriptSource],
-		columns.HashMapColumn[components.ScriptParsed],
-		columns.HashMapColumn[components.AliasingName],
-		columns.HashMapColumn[components.OcarinaNote],
-		columns.HashMapColumn[components.SongNotes],
-		columns.HashMapColumn[components.DungeonGroup],
-		columns.HashMapColumn[components.SilverRupeePuzzle],
-		columns.HashMapColumn[components.Song],
-		columns.HashMapColumn[components.Price],
+		withattr("/token/priority", columns.HashMapColumn[components.CollectablePriority]),
+		withattr("/world/placement/holding", columns.HashMapColumn[components.HoldsToken]),
+		withattr("/world/region/hint", columns.HashMapColumn[components.HintRegion]),
+		withattr("/world/region/alt-hint", columns.HashMapColumn[components.AltHintRegion]),
+		withattr("/world/dungeon/name", columns.HashMapColumn[components.DungeonName]),
+		withattr("/world/location/savewarp", columns.HashMapColumn[components.Savewarp]),
+		withattr("/world/scene", columns.HashMapColumn[components.Scene]),
+		withattr("/logic/script/decl", columns.HashMapColumn[components.ScriptDecl]),
+		withattr("/logic/script/source", columns.HashMapColumn[components.ScriptSource]),
+		withattr("/logic/script/parsed", columns.HashMapColumn[components.ScriptParsed]),
+		withattr("/name/alias", columns.HashMapColumn[components.AliasingName]),
+		withattr("/token/kind/ocarina-note", columns.HashMapColumn[components.OcarinaNote]),
+		withattr("/token/song/notes", columns.HashMapColumn[components.SongNotes]),
+		withattr("/world/dungeon/group", columns.HashMapColumn[components.DungeonGroup]),
+		withattr("/world/location/silver-rupee-puzzle", columns.HashMapColumn[components.SilverRupeePuzzle]),
+		withattr("/token/song", columns.HashMapColumn[components.Song]),
+		withattr("/token/price", columns.HashMapColumn[components.Price]),
 
-		columns.BitColumnOf[components.Skipped],
-		columns.BitColumnOf[components.Collected],
-		columns.BitColumnOf[components.TokenMarker],
-		columns.BitColumnOf[components.RegionMarker],
-		columns.BitColumnOf[components.IsBossRoom],
-		columns.BitColumnOf[components.Empty],
-		columns.BitColumnOf[components.Generated],
-		columns.BitColumnOf[components.Collectable],
-		columns.BitColumnOf[components.LocationMarker],
-		columns.BitColumnOf[components.TimePassess],
-		columns.BitColumnOf[components.Compass],
-		columns.BitColumnOf[components.Drop],
-		columns.BitColumnOf[components.DungeonReward],
-		columns.BitColumnOf[components.Event],
-		columns.BitColumnOf[components.Item],
-		columns.BitColumnOf[components.Map],
-		columns.BitColumnOf[components.Refill],
-		columns.BitColumnOf[components.Shop],
-		columns.BitColumnOf[components.SilverRupee],
-		columns.BitColumnOf[components.SilverRupeePouch],
-		columns.BitColumnOf[components.SmallKey],
-		columns.BitColumnOf[components.BossKey],
-		columns.BitColumnOf[components.DungeonKeyRing],
-		columns.BitColumnOf[components.GoldSkulltulaToken],
-		columns.BitColumnOf[components.Medallion],
-		columns.BitColumnOf[components.Stone],
-		columns.BitColumnOf[components.Bottle],
-		columns.BitColumnOf[components.WorldGraphRoot],
+		withattr("/world/location/skipped", columns.BitColumnOf[components.Skipped]),
+		withattr("/world/location/collected", columns.BitColumnOf[components.Collected]),
+		withattr("/token", columns.BitColumnOf[components.TokenMarker]),
+		withattr("/world/region", columns.BitColumnOf[components.RegionMarker]),
+		withattr("/world/is-boss-room", columns.BitColumnOf[components.IsBossRoom]),
+		withattr("/world/time-passes", columns.BitColumnOf[components.TimePassess]),
+		withattr("/token/kind/compass", columns.BitColumnOf[components.Compass]),
+		withattr("/token/kind/drop", columns.BitColumnOf[components.Drop]),
+		withattr("/token/kind/reward", columns.BitColumnOf[components.DungeonReward]),
+		withattr("/token/kind/event", columns.BitColumnOf[components.Event]),
+		withattr("/token/kind/item", columns.BitColumnOf[components.Item]),
+		withattr("/token/kind/map", columns.BitColumnOf[components.Map]),
+		withattr("/token/kind/refill", columns.BitColumnOf[components.Refill]),
+		withattr("/world/location/shop", columns.BitColumnOf[components.Shop]),
+		withattr("/token/kind/silver-rupee", columns.BitColumnOf[components.SilverRupee]),
+		withattr("/token/kind/silver-rupee-pouch", columns.BitColumnOf[components.SilverRupeePouch]),
+		withattr("/token/kind/small-key", columns.BitColumnOf[components.SmallKey]),
+		withattr("/token/kind/boss-key", columns.BitColumnOf[components.BossKey]),
+		withattr("/token/kind/key-ring", columns.BitColumnOf[components.DungeonKeyRing]),
+		withattr("/token/kind/gold-skull-token", columns.BitColumnOf[components.GoldSkulltulaToken]),
+		withattr("/token/kind/medallion", columns.BitColumnOf[components.Medallion]),
+		withattr("/token/kind/stone", columns.BitColumnOf[components.Stone]),
+		withattr("/token/kind/bottle", columns.BitColumnOf[components.Bottle]),
+		withattr("/world/location/root", columns.BitColumnOf[components.WorldGraphRoot]),
 	}
 }
