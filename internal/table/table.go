@@ -177,3 +177,13 @@ func (tbl *Table) UnsetValue(r RowId, c ColumnId) error {
 	}
 	return nil
 }
+
+func (tbl *Table) AttrTable() map[string]ColumnMetadata {
+	attrs := make(map[string]ColumnMetadata, len(tbl.cols))
+
+	for attr, id := range tbl.attrs {
+		attrs[attr] = tbl.cols[id]
+	}
+
+	return attrs
+}

@@ -32,6 +32,7 @@ type Column interface {
 type ColumnMetadata interface {
 	Type() reflect.Type
 	Id() ColumnId
+	Kind() ColumnKind
 }
 
 type ColumnData struct {
@@ -51,6 +52,10 @@ func (c ColumnData) Type() reflect.Type {
 
 func (c ColumnData) Id() ColumnId {
 	return c.id
+}
+
+func (c ColumnData) Kind() ColumnKind {
+	return c.kind
 }
 
 func BuildColumn(attr string, col Column, typ reflect.Type) *ColumnBuilder {
