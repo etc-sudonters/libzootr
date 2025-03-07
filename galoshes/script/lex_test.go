@@ -108,13 +108,9 @@ func (this *ExpectedTokens) Insert() *ExpectedTokens       { return this.add(TOK
 func (this *ExpectedTokens) Rules() *ExpectedTokens        { return this.add(TOKEN_RULES, rulesWord) }
 func (this *ExpectedTokens) True() *ExpectedTokens         { return this.add(TOKEN_TRUE, trueWord) }
 func (this *ExpectedTokens) False() *ExpectedTokens        { return this.add(TOKEN_FALSE, falseWord) }
-func (this *ExpectedTokens) Nil() *ExpectedTokens          { return this.add(TOKEN_NIL, nilWord) }
 func (this *ExpectedTokens) Comma() *ExpectedTokens        { return this.add(TOKEN_COMMA, ",") }
 func (this *ExpectedTokens) OpenBracket() *ExpectedTokens  { return this.add(TOKEN_OPEN_BRACKET, "[") }
 func (this *ExpectedTokens) CloseBracket() *ExpectedTokens { return this.add(TOKEN_CLOSE_BRACKET, "]") }
-func (this *ExpectedTokens) OpenParen() *ExpectedTokens    { return this.add(TOKEN_OPEN_PAREN, "[") }
-func (this *ExpectedTokens) CloseParen() *ExpectedTokens   { return this.add(TOKEN_CLOSE_PAREN, "]") }
-func (this *ExpectedTokens) Discard() *ExpectedTokens      { return this.add(TOKEN_DISCARD, "_") }
 func (this *ExpectedTokens) Assign() *ExpectedTokens       { return this.add(TOKEN_ASSIGN, ":-") }
 
 func (this *ExpectedTokens) Invoke(name string) *ExpectedTokens {

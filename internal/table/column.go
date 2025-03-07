@@ -70,6 +70,7 @@ func BuildColumn(attr string, col Column, typ reflect.Type) *ColumnBuilder {
 	b := new(ColumnBuilder)
 	b.column = col
 	b.typ = typ
+	b.attr = attr
 	return b
 }
 

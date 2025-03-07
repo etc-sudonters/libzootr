@@ -23,13 +23,9 @@ const (
 	TOKEN_RULES
 	TOKEN_TRUE
 	TOKEN_FALSE
-	TOKEN_NIL
 	TOKEN_COMMA         // ,
 	TOKEN_OPEN_BRACKET  // [
 	TOKEN_CLOSE_BRACKET // ]
-	TOKEN_OPEN_PAREN    // (
-	TOKEN_CLOSE_PAREN   // )
-	TOKEN_DISCARD       // _
 	TOKEN_ASSIGN        // :-
 	TOKEN_RULE          // :[a-z-]+
 	TOKEN_VARIABLE      // \$[a-z-]+
@@ -47,7 +43,6 @@ const (
 	rulesWord  = "rules"
 	trueWord   = "true"
 	falseWord  = "false"
-	nilWord    = "nil"
 	attrSep    = '/'
 )
 
@@ -67,20 +62,12 @@ func TokenTypeString(t TokenType) string {
 		return "<TRUE>"
 	case TOKEN_FALSE:
 		return "<FALSE>"
-	case TOKEN_NIL:
-		return "<NIL>"
 	case TOKEN_COMMA:
 		return "<COMMA>"
 	case TOKEN_OPEN_BRACKET:
 		return "<OPEN_BRACKET>"
 	case TOKEN_CLOSE_BRACKET:
 		return "<CLOSE_BRACKET>"
-	case TOKEN_OPEN_PAREN:
-		return "<OPEN_PAREN>"
-	case TOKEN_CLOSE_PAREN:
-		return "<CLOSE_PAREN>"
-	case TOKEN_DISCARD:
-		return "<DISCARD>"
 	case TOKEN_ASSIGN:
 		return "<ASSIGN>"
 	case TOKEN_RULE:
@@ -118,7 +105,7 @@ func Tokens(l *peruse.StringLexer) iter.Seq[peruse.Token] {
 }
 
 type lexState struct {
-	brackDepth, parenDepth int
+	brackDepth int
 }
 
 func NewLexer(script string) *peruse.StringLexer {
@@ -143,19 +130,10 @@ func lexScript(l *peruse.StringLexer, state any) peruse.LexFn {
 
 	switch r {
 	case eof:
-		if s.parenDepth > 0 {
-			return l.Error("unclosed '('")
-		}
 		if s.brackDepth > 0 {
 			return l.Error("unclosed '['")
 		}
 		return nil
-	case '(':
-		s.parenDepth++
-		return l.Emit(TOKEN_OPEN_PAREN)
-	case ')':
-		s.parenDepth--
-		return l.Emit(TOKEN_CLOSE_PAREN)
 	case '[':
 		s.brackDepth++
 		return l.Emit(TOKEN_OPEN_BRACKET)
@@ -164,8 +142,6 @@ func lexScript(l *peruse.StringLexer, state any) peruse.LexFn {
 		return l.Emit(TOKEN_CLOSE_BRACKET)
 	case ',':
 		return l.Emit(TOKEN_COMMA)
-	case '_':
-		return l.Emit(TOKEN_DISCARD)
 	case '"':
 		return lexString
 	case '$':
@@ -245,8 +221,6 @@ func lexWord(l *peruse.StringLexer, _ any) peruse.LexFn {
 		return l.Emit(TOKEN_TRUE)
 	case falseWord:
 		return l.Emit(TOKEN_FALSE)
-	case nilWord:
-		return l.Emit(TOKEN_NIL)
 	default:
 		// if it's a bareword and not a keyword, it's an attribute
 		return l.Emit(TOKEN_ATTRIBUTE)

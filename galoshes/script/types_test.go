@@ -41,7 +41,12 @@ rules [
 	}
 
 	subs := make(Substitutions, 16)
-	if err := Annotate(find, NewAstEnv(), subs); err != nil {
+	env := NewAstEnv()
+	env.AddAttr("world/placement/holds", 1, TypeNumber{})
+	env.AddAttr("tokens", 2, TypeNumber{})
+	env.AddAttr("names", 3, TypeString{})
+
+	if err := Annotate(find, env, subs); err != nil {
 		t.Fatalf("failed to annotate: %s", err)
 	}
 	ts := TypeDisplay{Sink: &strings.Builder{}}

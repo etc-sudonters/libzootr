@@ -1,5 +1,15 @@
 {
     "configurations": {
+        "query": {
+            "adapter": "vscode-go",
+            "configuration": {
+                "request": "launch",
+                "program": "${workspaceRoot}/cmd/query/",
+                "args": [],
+                "mode": "debug",
+                "dlvToolPath": "$GOPATH/bin/dlv"
+            }
+        },
         "zoodle": {
             "adapter": "vscode-go",
             "configuration": {

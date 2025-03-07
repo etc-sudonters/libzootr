@@ -1,8 +1,33 @@
 package script
 
 import (
+	"fmt"
+	"sudonters/libzootr/internal/table"
 	"sync"
+
+	"github.com/etc-sudonters/substrate/peruse"
+	"github.com/etc-sudonters/substrate/slipup"
 )
+
+func ParseScript(script string, env *AstEnv) (AstNode, error) {
+	lexer := NewLexer(script)
+	parser := peruse.NewParser(grammar, lexer)
+	result, parseErr := parser.ParseAt(peruse.LOWEST)
+	if parseErr != nil {
+		return nil, slipup.Describe(parseErr, "while parsing")
+	}
+
+	subs := make(Substitutions, 16)
+	if err := Annotate(result, env, subs); err != nil {
+		return nil, slipup.Describe(err, "while annotating types")
+	}
+
+	if err := SubstituteTypes(result, subs); err != nil {
+		return nil, slipup.Describe(err, "while infering types")
+	}
+
+	return result, nil
+}
 
 var _ QueryNode = (*FindNode)(nil)
 var _ QueryNode = (*InsertNode)(nil)
@@ -26,7 +51,6 @@ func GetTypes[T AstNode](nodes []T) []Type {
 	return tys
 }
 
-type AttrId uint32
 type AstKind uint8
 type AstNode interface {
 	NodeKind() AstKind
@@ -64,11 +88,16 @@ const (
 func NewAstEnv() *AstEnv {
 	env := new(AstEnv)
 	env.names = make(map[string]Type)
+	env.attrs = make(map[string]AttrId)
 	return env
 }
 
+type AttrId = table.ColumnId
+
 type AstEnv struct {
-	names map[string]Type
+	names  map[string]Type
+	attrs  map[string]AttrId
+	parent *AstEnv
 }
 
 var nextTypeVar TypeVar = 1
@@ -83,11 +112,41 @@ func NextTypeVar() TypeVar {
 }
 
 func (this *AstEnv) GetNamed(name string) Type {
-	return this.names[name]
+	ty, exists := this.names[name]
+	if !exists && this.parent != nil {
+		return this.parent.GetNamed(name)
+	}
+	return ty
+}
+
+func (this *AstEnv) GetAttr(name string) (Type, AttrId) {
+	ty := this.GetNamed(name)
+	if ty == nil {
+		return nil, 0
+	}
+	id := this.GetAttrId(name)
+	return ty, id
+}
+
+func (this *AstEnv) GetAttrId(name string) AttrId {
+	id := this.attrs[name]
+	if id == 0 && this.parent != nil {
+		id = this.parent.GetAttrId(name)
+	}
+	return id
 }
 
 func (this *AstEnv) AddNamed(name string, ty Type) {
+	if ty == nil {
+		panic(fmt.Errorf("%q passed with nil type", name))
+	}
 	this.names[name] = ty
+}
+
+func (this *AstEnv) AddAttr(name string, id AttrId, ty Type) {
+	this.AddNamed(name, ty)
+	this.attrs[name] = id
+
 }
 
 type FindNode struct {
@@ -218,9 +277,9 @@ func (this *EntityNode) GetType() Type {
 }
 
 type AttrNode struct {
+	Id   AttrId
 	Type Type
 	Name string
-	Id   AttrId
 }
 
 func (this *AttrNode) NodeKind() AstKind {

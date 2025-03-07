@@ -58,6 +58,7 @@ func Annotate(node AstNode, env *AstEnv, subs Substitutions) error {
 		node.Type = TypeVoid{}
 	case *RuleDeclNode:
 		newEnv := NewAstEnv()
+		newEnv.parent = env
 		if err := AnnotateAll(node.Params, newEnv, subs); err != nil {
 			return fmt.Errorf("on clause param: %w", err)
 		}
@@ -115,13 +116,12 @@ func Annotate(node AstNode, env *AstEnv, subs Substitutions) error {
 			node.Var.Type = ty
 		}
 	case *AttrNode:
-		ty := env.GetNamed(node.Name)
-		if ty == nil {
-			tv := NextTypeVar()
-			ty = tv
-			env.AddNamed(node.Name, ty)
-		}
+		ty, id := env.GetAttr(node.Name)
+		node.Id = id
 		node.Type = ty
+		if node.Type == nil || node.Id == 0 {
+			return fmt.Errorf("unknown attribute %q", node.Name)
+		}
 	case *BoolNode, *NumberNode, *StringNode:
 	default:
 		return fmt.Errorf("unknown node type: %#v", node)
@@ -139,6 +139,10 @@ func AnnotateAll[T AstNode](nodes []T, env *AstEnv, subs Substitutions) error {
 }
 
 func AnnotateTriplet(node *TripletNode, env *AstEnv, subs Substitutions) error {
+	/* TODO triplets have the type [ Number Var{X} Var{X} ] Var{Y}
+	   All instances of [ _ ATTR_NAME _ ] need to unify under this pattern
+	*/
+
 	if err := Annotate(node.Id, env, subs); err != nil {
 		return fmt.Errorf("on triplet id: %w", err)
 	}
@@ -148,11 +152,23 @@ func AnnotateTriplet(node *TripletNode, env *AstEnv, subs Substitutions) error {
 	if err := Annotate(node.Predicate, env, subs); err != nil {
 		return fmt.Errorf("on triplet predicate: %w", err)
 	}
-	tt := TypeTuple{[]Type{node.Id.GetType(), node.Attribute.GetType(), node.Predicate.GetType()}}
+	attrType := node.Attribute.GetType()
+	tripTT, err := Substitute(TypeTuple{[]Type{node.Id.GetType(), node.Attribute.GetType(), node.Predicate.GetType()}}, subs)
+	if err != nil {
+		return err
+	}
+	attrTT := TypeTuple{[]Type{TypeNumber{}, attrType, attrType}}
+	if err != nil {
+		return err
+	}
+
+	if err := Unify(tripTT, attrTT, subs); err != nil {
+		return err
+	}
 	tv := NextTypeVar()
-	subs[tv] = tt
+	subs[tv] = attrTT
 	node.Type = tv
-	return nil
+	return Unify(node.Type, attrTT, subs)
 }
 
 type CannotUnify struct {
