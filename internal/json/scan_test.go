@@ -5,6 +5,34 @@ import (
 	"testing"
 )
 
+func (this *Scanner) DiscardAll() error {
+	for this.Scan() {
+	}
+	return this.Err()
+}
+
+func TestMyUnderstanding(t *testing.T) {
+	if len([]byte("\"")) != 1 {
+		t.Fail()
+	}
+}
+
+func TestScansNewLinesProperly(t *testing.T) {
+	json := []byte("[\n\r{\n\"property\"\r:\"\nsome\r\nnew\nlines\r\"}\r\n//acomment\r\n]")
+	t.Log(string(json))
+	expectedLine := 11 // 1 + \n + \r + \n + \r + \n + \r\n + \n + \r + \r\n + \r\n
+	scanner := scanner(json)
+
+	if err := scanner.DiscardAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	if scanner.line != expectedLine {
+		t.Logf("Expected %d lines but counted %d", expectedLine, scanner.line)
+		t.Fail()
+	}
+}
+
 func TestCanScanJson(t *testing.T) {
 	tests := []severalTokens{
 		makeSeveralTokens("{}", expectChar('{'), expectChar('}')),
@@ -56,7 +84,7 @@ func TestCanScanJson(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(fmt.Sprintf("scan: %q", test.input), func(t *testing.T) {
-			scanner := scanner(test.input)
+			scanner := scanner([]byte(test.input))
 
 			for scanner.Scan() {
 				scanned, body := scanner.Lexeme()
@@ -101,12 +129,13 @@ func TestCanScanJsonAtom(t *testing.T) {
 		{"//comment\n", scanned_comment, "comment"},
 		{"#comment", scanned_comment, "comment"},
 		{"#comment\n", scanned_comment, "comment"},
+		{"\n\rfalse\r\n", scanned_false, "false"},
 	}
 
 	for _, test := range tests {
 		test := test
 		t.Run(fmt.Sprintf("scan %q", test.input), func(t *testing.T) {
-			scanner := scanner(test.input)
+			scanner := scanner([]byte(test.input))
 			scanned := scanner.Scan()
 			if !scanned {
 				t.Log("failed to scan", scanner.Err())

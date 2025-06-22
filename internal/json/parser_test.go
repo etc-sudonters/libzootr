@@ -3,7 +3,7 @@ package json
 import "testing"
 
 func TestCanDiscard(t *testing.T) {
-	input := `{"array": [1,2,3,4,5], "nested": {"property": 1}, "another": {}}`
+	input := []byte(`{"array": [1,2,3,4,5], "nested": {"property": 1}, "another": {}}`)
 	parser := NewParser(scanner(input))
 	obj, err := parser.ReadObject()
 	fatalOnErr(t, err)
@@ -15,7 +15,7 @@ func TestCanDiscard(t *testing.T) {
 }
 
 func TestCanParseEmptyObj(t *testing.T) {
-	input := `{}`
+	input := []byte(`{}`)
 	parser := NewParser(scanner(input))
 
 	obj, err := parser.ReadObject()
@@ -29,7 +29,7 @@ func TestCanParseEmptyObj(t *testing.T) {
 }
 
 func TestCanParseEmptyArr(t *testing.T) {
-	input := `[]`
+	input := []byte(`[]`)
 	parser := NewParser(scanner(input))
 
 	obj, err := parser.ReadArray()
@@ -43,7 +43,7 @@ func TestCanParseEmptyArr(t *testing.T) {
 }
 
 func TestCanParseComplicated(t *testing.T) {
-	input := `
+	input := []byte(`
     {
         "property" #comment
         : "words words words",
@@ -51,7 +51,7 @@ func TestCanParseComplicated(t *testing.T) {
         3
         ]
     }
-`
+`)
 
 	type test struct {
 		property string

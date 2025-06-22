@@ -58,11 +58,6 @@ type Parser struct {
 	curr, peek Token
 }
 
-type composite struct {
-	obj bool
-	n   int
-}
-
 func NewParser(scanner *Scanner) *Parser {
 	p := new(Parser)
 	p.scanner = scanner

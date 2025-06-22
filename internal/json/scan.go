@@ -24,6 +24,7 @@ type lexeme struct {
 func NewScanner(r io.Reader) *Scanner {
 	this := &Scanner{
 		inner: bufio.NewScanner(r),
+		line:  1,
 	}
 	this.inner.Split(this.split)
 	return this
@@ -99,13 +100,8 @@ func (this *Scanner) scan(buffer []byte, atEof bool) (int, []byte, error) {
 
 	char, n := buffer[0], 1
 
-	var err error
-	if isWhitespace(char) {
-		char, err = this.scanWhitespace(buffer, atEof, &n)
-		if err != nil {
-			return n, nil, err
-		}
-
+	if isSpace(char) {
+		char = this.scanSpace(buffer, atEof, &n)
 		if char == eof && !atEof {
 			return n, nil, nil
 		}
@@ -159,29 +155,40 @@ func (this *Scanner) scan(buffer []byte, atEof bool) (int, []byte, error) {
 	return n, nil, this.invalidToken(string(char))
 }
 
-func isWhitespace(char byte) bool {
+func isSpace(char byte) bool {
 	return char == ' ' || char == '\n' || char == '\t' || char == '\r'
 }
 
-func canBeginNumber(char byte) bool {
-	return ('0' <= char && char <= '9') || char == '.' || char == '-'
-}
+func (this *Scanner) scanSpace(buffer []byte, _ bool, n *int) byte {
+	advance := -1
+	for _, char := range buffer[(*n)-1:] {
+		advance++
 
-func (this *Scanner) scanWhitespace(buffer []byte, _ bool, n *int) (byte, error) {
-	startAt := *n
-	found := eof
-	for _, char := range buffer[startAt:] {
-		(*n)++
-		if char == '\n' || char == '\r' {
+		switch char {
+		case ' ', '\t':
+			continue
+		case '\n':
 			this.recordLine()
-		}
-		if !isWhitespace(char) {
-			found = char
-			break
+		case '\r':
+			next := (*n) + advance + 1
+			if next < len(buffer) {
+				if buffer[next] == '\n' {
+					continue
+				}
+				this.recordLine()
+				continue
+			}
+			// retain \r
+			(*n) += advance - 1
+			return eof
+		default:
+			(*n) += advance
+			return char
 		}
 	}
 
-	return found, nil
+	(*n) += advance
+	return eof
 }
 
 func (this *Scanner) scanString(buffer []byte, atEof bool, n *int) ([]byte, error) {
@@ -200,7 +207,12 @@ func (this *Scanner) scanString(buffer []byte, atEof bool, n *int) ([]byte, erro
 			// overwrite \
 			token[i] = char
 		}
-		if char == '\n' || char == '\r' {
+		if char == '\n' {
+			if i == 0 || token[i-1] != '\r' {
+				this.recordLine()
+			}
+		}
+		if char == '\r' {
 			this.recordLine()
 		}
 		i++
@@ -230,9 +242,22 @@ func (this *Scanner) scanComment(buffer []byte, atEof bool, n *int) ([]byte, err
 	}
 	beginOfComment := *n
 	last := buffer[beginOfComment]
+	slice := buffer[beginOfComment:]
 
-	for _, char := range buffer[beginOfComment:] {
+	for i, char := range slice {
 		last = char
+		if char == '\r' {
+			if i+1 < len(slice) {
+				if slice[i+1] == '\n' {
+					(*n)++
+					continue
+				}
+			} else {
+				*n = startAt - 1
+				return nil, nil
+			}
+		}
+
 		if char == '\n' || char == '\r' {
 			this.recordLine()
 			break
@@ -253,6 +278,10 @@ func (this *Scanner) scanComment(buffer []byte, atEof bool, n *int) ([]byte, err
 		(*n)++
 	}
 	return token, nil
+}
+
+func canBeginNumber(char byte) bool {
+	return ('0' <= char && char <= '9') || char == '.' || char == '-'
 }
 
 func (this *Scanner) scanNumber(buffer []byte, atEof bool, n *int) ([]byte, error) {

@@ -1,8 +1,8 @@
 package json
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -16,8 +16,8 @@ func (this singleToken) isExpected(scanned scanned, body string) bool {
 	return this.scanned == scanned && this.body == body
 }
 
-func scanner(src string) *Scanner {
-	return NewScanner(strings.NewReader(src))
+func scanner(src []byte) *Scanner {
+	return NewScanner(bytes.NewReader(src))
 }
 
 type severalTokens struct {
