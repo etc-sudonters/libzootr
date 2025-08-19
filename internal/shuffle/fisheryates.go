@@ -61,7 +61,7 @@ func (this *Q[T]) dequeue() T {
 	//   (inclusive) to len(..) (exclusive) is a valid index in the slice
 	// Since we swap to the _front_ of the slice we add the dqCount count to
 	// this generated index to get the actual swapping index.
-	// do the swap and spit out a pointer to the selected item
+	// do the swap and spit out the value at the current index
 	swap := this.rng.IntN(this.Len()) + this.dqCount
 	current := this.dqCount
 	this.dqCount += 1
