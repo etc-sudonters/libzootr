@@ -38,13 +38,8 @@ func fromStartingAge(start settings.StartingAge) Age {
 func explore(ctx context.Context, xplr *magicbean.Exploration, generation *magicbean.Generation, age Age) magicbean.ExplorationResults {
 	pockets := magicbean.NewPockets(&generation.Inventory, &generation.Ocm)
 
-	var shuffleFlags magicbean.ShuffleFlags
-	if generation.Settings.Shuffling.OcarinaNotes {
-		shuffleFlags = shuffleFlags | magicbean.SHUFFLE_OCARINA_NOTES
-	}
-
 	funcs := magicbean.BuiltIns{}
-	magicbean.CreateBuiltInHasFuncs(&funcs, &pockets, shuffleFlags)
+	magicbean.CreateBuiltInHasFuncs(&funcs, &pockets, &generation.Settings)
 	funcs.CheckTodAccess = magicbean.ConstBool(true)
 	funcs.IsAdult = magicbean.ConstBool(age == AgeAdult)
 	funcs.IsChild = magicbean.ConstBool(age == AgeChild)

@@ -23,6 +23,7 @@ var names = []string{
 	"entrance_shuffle",
 	"fix_broken_drops",
 	"free_bombchu_drops",
+	"scarecrow_behavior",
 	"free_scarecrow",
 	"ganon_bosskey_hearts",
 	"ganon_bosskey_medallions",

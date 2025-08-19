@@ -21,7 +21,9 @@ var (
 )
 
 const (
-	isTrickEnabledPrefix = "logic_"
+	isTrickEnabledPrefix    = "logic_"
+	isAdvTrickEnabledPrefix = "adv_"
+	isGlitchEnabledPrefix   = "glitch_"
 )
 
 type CouldNotLowerTree struct {
@@ -108,6 +110,13 @@ func Lower(tbl *symbols.Table, node ruleparser.Tree) (Node, error) {
 				return createCall(tbl, "is_trick_enabled", ruleparser.StringLiteral(trimmed))
 			}
 		}
+		if trimmed, didTrim := strings.CutPrefix(node.Value, isAdvTrickEnabledPrefix); didTrim {
+			return createCall(tbl, "is_trick_enabled", ruleparser.StringLiteral(trimmed))
+		}
+		if trimmed, didTrim := strings.CutPrefix(node.Value, isGlitchEnabledPrefix); didTrim {
+			return createCall(tbl, "is_glitch_enabled", ruleparser.StringLiteral(trimmed))
+		}
+
 		symbol := tbl.Declare(node.Value, symbols.UNKNOWN)
 		return IdentifierFrom(symbol), nil
 	case *ruleparser.Literal:

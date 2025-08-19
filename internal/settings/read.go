@@ -47,6 +47,8 @@ func (this *Zootr) String(name string) (string, error) {
 		val = this.Damage.Bonk.String()
 	case "shuffle_gerudo_fortress_heart_piece":
 		val = "remove"
+	case "scarecrow_behavior":
+		val = this.ScarecrowBehavior.String()
 	default:
 		return val, unknown(name)
 	}
@@ -256,11 +258,11 @@ func (this *Zootr) Bool(name string) (bool, error) {
 	case "fast_chests":
 		val = this.FastChests
 	case "free_scarecrow":
-		val = this.Starting.Scarecrow
+		val = this.ScarecrowBehavior == ScarecrowBehaviorFree
 	case "plant_beans":
 		val = this.Starting.PlantBeans
 	case "easier_fire_arrow_entry":
-		val = this.Tricks.ShadowFireArrowEntry != 0
+		val = this.Skills.ShadowFireArrowEntry != 0
 	case "ruto_already_f1_jabu":
 		val = this.Skips.RutoAlreadyOnFloor1
 	case "chicken_count_random":
