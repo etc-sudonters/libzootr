@@ -1,12 +1,12 @@
 package tracking
 
 import (
-	"sudonters/libzootr/magicbean"
+	"sudonters/libzootr/components"
 	"sudonters/libzootr/zecs"
 )
 
 func NewTokens(ocm *zecs.Ocm) Tokens {
-	return Tokens{named[magicbean.Token](ocm), ocm}
+	return Tokens{named[components.TokenMarker](ocm), ocm}
 }
 
 type Tokens struct {
@@ -21,7 +21,7 @@ type Token struct {
 
 func (this Tokens) Named(name name) Token {
 	token := this.tokens.For(name)
-	token.Attach(magicbean.Token{})
+	token.Attach(components.TokenMarker{})
 	return Token{token, name}
 }
 

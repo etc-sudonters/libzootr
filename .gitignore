@@ -49,3 +49,4 @@ zootlr
 .worktrees
 inputs/
 .data/
+.logs/

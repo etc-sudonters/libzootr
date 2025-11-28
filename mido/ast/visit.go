@@ -1,6 +1,9 @@
 package ast
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Visiting func(Node) error
 
@@ -101,7 +104,7 @@ func (v *Visitor) visit(node Node) error {
 		if node == nil {
 			panic("visited nil node")
 		}
-		panic("not implemented")
+		panic(fmt.Errorf("unknown node type: %T", node))
 	}
 }
 

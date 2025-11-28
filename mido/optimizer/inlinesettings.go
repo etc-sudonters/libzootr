@@ -3,40 +3,45 @@ package optimizer
 import (
 	"fmt"
 	"sudonters/libzootr/internal"
-	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/symbols"
 )
 
-type reader func(*settings.Zootr, string) ast.Node
+type reader func(SettingReader, string) ast.Node
 
-func InlineSettings(these *settings.Zootr, symbols *symbols.Table) ast.Rewriter {
+type SettingReader interface {
+	String(string) (string, error)
+	Number(string) (float64, error)
+	Bool(string) (bool, error)
+}
+
+func InlineSettings(these SettingReader, symbols *symbols.Table) ast.Rewriter {
 	inliner := newinliner(these, symbols)
 	return ast.Rewriter{
 		Identifier: inliner.Identifier,
 	}
 }
 
-func str(these *settings.Zootr, name string) ast.Node {
+func str(these SettingReader, name string) ast.Node {
 	value, err := these.String(name)
 	internal.PanicOnError(err)
 	return ast.String(value)
 }
 
-func f64(these *settings.Zootr, name string) ast.Node {
-	value, err := these.Float64(name)
+func f64(these SettingReader, name string) ast.Node {
+	value, err := these.Number(name)
 	internal.PanicOnError(err)
 	return ast.Number(value)
 }
 
-func boolean(these *settings.Zootr, name string) ast.Node {
+func boolean(these SettingReader, name string) ast.Node {
 	value, err := these.Bool(name)
 	internal.PanicOnError(err)
 	return ast.Boolean(value)
 }
 
 type settinginline struct {
-	these   *settings.Zootr
+	these   SettingReader
 	symbols *symbols.Table
 	readers map[string]reader
 }
@@ -45,10 +50,6 @@ func (this settinginline) Identifier(node ast.Identifier, _ ast.Rewriting) (ast.
 	symbol := this.symbols.LookUpByIndex(node.AsIndex())
 	if symbol == nil {
 		return node, nil
-	}
-
-	if "shuffle_gerudo_fortress_heart_piece" == symbol.Name {
-		_ = symbol.Name
 	}
 
 	reader, exists := this.readers[symbol.Name]
@@ -76,7 +77,7 @@ func (this settinginline) Identifier(node ast.Identifier, _ ast.Rewriting) (ast.
 	return result, nil
 }
 
-func newinliner(these *settings.Zootr, symbols *symbols.Table) settinginline {
+func newinliner(these SettingReader, symbols *symbols.Table) settinginline {
 	var inliner settinginline
 	inliner.symbols = symbols
 	inliner.these = these
@@ -119,56 +120,58 @@ func newinliner(these *settings.Zootr, symbols *symbols.Table) settinginline {
 		"ganon_bosskey_hearts":                f64,
 		"chicken_count":                       f64,
 		"big_poe_count":                       f64,
-		"trials_random":                       boolean,
-		"triforce_hunt":                       boolean,
-		"open_door_of_time":                   boolean,
-		"shuffle_hideout_entrances":           boolean,
-		"shuffle_grotto_entrances":            boolean,
-		"shuffle_ganon_tower":                 boolean,
-		"shuffle_overworld_entrances":         boolean,
-		"shuffle_gerudo_valley_river_exit":    boolean,
-		"owl_drops":                           boolean,
-		"free_bombchu_drops":                  boolean,
-		"warp_songs":                          boolean,
-		"adult_trade_shuffle":                 boolean,
-		"shuffle_empty_pots":                  boolean,
-		"shuffle_empty_crates":                boolean,
-		"shuffle_cows":                        boolean,
-		"shuffle_beehives":                    boolean,
-		"shuffle_wonderitems":                 boolean,
-		"shuffle_kokiri_sword":                boolean,
-		"shuffle_ocarinas":                    boolean,
-		"shuffle_gerudo_card":                 boolean,
-		"shuffle_beans":                       boolean,
-		"shuffle_expensive_merchants":         boolean,
-		"shuffle_frog_song_rupees":            boolean,
-		"shuffle_individual_ocarina_notes":    boolean,
-		"keyring_give_bk":                     boolean,
-		"enhance_map_compass":                 boolean,
-		"start_with_consumables":              boolean,
-		"start_with_rupees":                   boolean,
-		"skip_reward_from_rauru":              boolean,
-		"skip_child_zelda":                    boolean,
-		"no_escape_sequence":                  boolean,
-		"no_guard_stealth":                    boolean,
-		"no_epona_race":                       boolean,
-		"skip_some_minigame_phases":           boolean,
-		"complete_mask_quest":                 boolean,
-		"useful_cutscenes":                    boolean,
-		"fast_chests":                         boolean,
-		"free_scarecrow":                      boolean,
-		"plant_beans":                         boolean,
-		"easier_fire_arrow_entry":             boolean,
-		"ruto_already_f1_jabu":                boolean,
-		"chicken_count_random":                boolean,
-		"clearer_hints":                       boolean,
-		"blue_fire_arrows":                    boolean,
-		"fix_broken_drops":                    boolean,
-		"tcg_requires_lens":                   boolean,
-		"no_collectible_hearts":               boolean,
-		"one_item_per_dungeon":                boolean,
-		"shuffle_interior_entrances":          boolean,
-		"shuffle_silver_rupees":               boolean,
+
+		"adult_trade_shuffle":              boolean,
+		"blue_fire_arrows":                 boolean,
+		"chicken_count_random":             boolean,
+		"clearer_hints":                    boolean,
+		"complete_mask_quest":              boolean,
+		"disable_trade_revert":             boolean,
+		"easier_fire_arrow_entry":          boolean,
+		"enhance_map_compass":              boolean,
+		"fast_chests":                      boolean,
+		"fix_broken_drops":                 boolean,
+		"free_bombchu_drops":               boolean,
+		"free_scarecrow":                   boolean,
+		"keyring_give_bk":                  boolean,
+		"no_collectible_hearts":            boolean,
+		"no_epona_race":                    boolean,
+		"no_escape_sequence":               boolean,
+		"no_guard_stealth":                 boolean,
+		"one_item_per_dungeon":             boolean,
+		"open_door_of_time":                boolean,
+		"owl_drops":                        boolean,
+		"plant_beans":                      boolean,
+		"ruto_already_f1_jabu":             boolean,
+		"shuffle_beans":                    boolean,
+		"shuffle_beehives":                 boolean,
+		"shuffle_cows":                     boolean,
+		"shuffle_empty_crates":             boolean,
+		"shuffle_empty_pots":               boolean,
+		"shuffle_expensive_merchants":      boolean,
+		"shuffle_frog_song_rupees":         boolean,
+		"shuffle_ganon_tower":              boolean,
+		"shuffle_gerudo_card":              boolean,
+		"shuffle_gerudo_valley_river_exit": boolean,
+		"shuffle_grotto_entrances":         boolean,
+		"shuffle_hideout_entrances":        boolean,
+		"shuffle_individual_ocarina_notes": boolean,
+		"shuffle_interior_entrances":       boolean,
+		"shuffle_kokiri_sword":             boolean,
+		"shuffle_ocarinas":                 boolean,
+		"shuffle_overworld_entrances":      boolean,
+		"shuffle_silver_rupees":            boolean,
+		"shuffle_wonderitems":              boolean,
+		"skip_child_zelda":                 boolean,
+		"skip_reward_from_rauru":           boolean,
+		"skip_some_minigame_phases":        boolean,
+		"start_with_consumables":           boolean,
+		"start_with_rupees":                boolean,
+		"tcg_requires_lens":                boolean,
+		"trials_random":                    boolean,
+		"triforce_hunt":                    boolean,
+		"useful_cutscenes":                 boolean,
+		"warp_songs":                       boolean,
 	}
 
 	return inliner

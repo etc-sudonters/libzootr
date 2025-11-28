@@ -3,8 +3,8 @@ package mido
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"sudonters/libzootr/internal/ruleparser"
-	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/compiler"
 	"sudonters/libzootr/mido/objects"
@@ -108,12 +108,23 @@ func CompilerWithTokens(names []string) ConfigureCompiler {
 	}
 }
 
+func CompilerWithGenerationSettings(names []string) ConfigureCompiler {
+	return func(env *CompileEnv) {
+		for i, name := range names {
+			symbol := env.Symbols.Declare(name, symbols.SETTING)
+			env.Objects.AssociateSymbol(
+				symbol,
+				objects.PackPtr32(objects.Ptr32{Tag: objects.PtrSetting, Addr: objects.Addr32(i)}),
+			)
+		}
+	}
+}
+
 func CompilerDefaults() ConfigureCompiler {
 	return func(env *CompileEnv) {
 		env.Optimize.Passes = 10
 
 		env.Symbols.DeclareMany(symbols.GLOBAL, GlobalNames())
-		env.Symbols.DeclareMany(symbols.SETTING, settings.Names())
 
 		env.Optimize.AddOptimizer(func(env *CompileEnv) ast.Rewriter {
 			return optimizer.InlineCalls(env.Optimize.Context, env.Symbols, env.ScriptedFuncs)
@@ -157,13 +168,8 @@ type CompileEnv struct {
 	ScriptedFuncs *optimizer.ScriptedFunctions
 	Objects       *objects.Builder
 
-	Optimize     Optimize
-	Analysis     Analysis
-	onSourceLoad []SourceLoaded
-}
-
-func (this *CompileEnv) OnSourceLoad(f SourceLoaded) {
-	this.onSourceLoad = append(this.onSourceLoad, f)
+	Optimize Optimize
+	Analysis Analysis
 }
 
 type Analysis struct {
@@ -230,9 +236,35 @@ type CodeGen struct {
 	postanalyzers []ast.Visitor
 }
 
+func (this CodeGen) SymbolTable() *symbols.Table {
+	return this.env.Symbols
+}
+
 func (this CodeGen) Parse(source string) (ast.Node, error) {
 	ast, err := ast.Parse(source, this.env.Symbols, this.env.Grammar)
 	return ast, err
+}
+
+func (this CodeGen) StepOptimize(node ast.Node, err *error) iter.Seq2[int, ast.Node] {
+	return func(yield func(int, ast.Node) bool) {
+		if !yield(0, node) {
+			return
+		}
+		for i := range this.env.Optimize.Passes {
+			for _, rw := range this.rewriters {
+				node, *err = rw.Rewrite(node)
+				if !yield(i+1, node) {
+					return
+				}
+				if node == nil {
+					return
+				}
+				if *err != nil {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (this CodeGen) Optimize(node ast.Node) (ast.Node, error) {
@@ -259,9 +291,6 @@ func (this CodeGen) Compile(node ast.Node) (compiler.Bytecode, error) {
 
 func (this CodeGen) CompileSource(src *CompilationSource) (compiler.Bytecode, error) {
 	var bytecode compiler.Bytecode
-	for i := range this.env.onSourceLoad {
-		this.env.onSourceLoad[i](this.env, src)
-	}
 
 	if src.Ast == nil {
 		var astErr error
@@ -302,3 +331,13 @@ var (
 	ErrOptimization = errors.New("optimization")
 	ErrCompile      = errors.New("compile")
 )
+
+func StepOptimize(src string, codegen *CodeGen, err *error) iter.Seq2[int, ast.Node] {
+	var node ast.Node
+	node, *err = codegen.Parse(src)
+	if *err != nil {
+		return func(yield func(int, ast.Node) bool) {}
+	}
+
+	return codegen.StepOptimize(node, err)
+}

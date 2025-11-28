@@ -45,7 +45,7 @@ func main() {
 		return
 	}
 
-	appExitCode = runMain(ctx, opts)
+	appExitCode = runMain(ctx, &std, &opts)
 	return
 }
 
@@ -58,6 +58,7 @@ func (arg missingRequired) Error() string {
 type cliOptions struct {
 	logicDir  string
 	dataDir   string
+	spoiler   string
 	includeMq bool
 	profile   string
 }
@@ -66,6 +67,7 @@ func (opts *cliOptions) init() error {
 	flag.StringVar(&opts.logicDir, "l", "", "Directory where logic files are located")
 	flag.StringVar(&opts.dataDir, "d", "", "Directory where data files are stored")
 	flag.StringVar(&opts.profile, "p", "", "profile file name")
+	flag.StringVar(&opts.spoiler, "s", "", "Path to spoiler log to import")
 	flag.BoolVar(&opts.includeMq, "M", false, "Whether or not to include MQ data")
 	flag.Parse()
 

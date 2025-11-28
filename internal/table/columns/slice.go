@@ -3,16 +3,17 @@ package columns
 import (
 	"fmt"
 	"reflect"
-	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
+
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 )
 
-func SliceColumn[T any]() *table.ColumnBuilder {
-	return table.BuildColumnOf[T](NewSlice())
+func SliceColumn[T any](attr string) *table.ColumnBuilder {
+	return table.BuildColumnOf[T](attr, NewSlice())
 }
 
-func SizedSliceColumn[T any](size uint32) *table.ColumnBuilder {
-	return table.BuildColumnOf[T](SizedSlice(size))
+func SizedSliceColumn[T any](attr string, size uint32) *table.ColumnBuilder {
+	return table.BuildColumnOf[T](attr, SizedSlice(size))
 }
 
 func NewSlice() *Slice {
@@ -95,6 +96,10 @@ func (row Slice) Len() int {
 
 func (row Slice) Capacity() int {
 	return len(row.components)
+}
+
+func (row Slice) Membership() bitset32.Bitset {
+	return bitset32.Copy(*row.members)
 }
 
 func (row Slice) scanMembers(v table.Value) (b bitset32.Bitset) {

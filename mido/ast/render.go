@@ -3,15 +3,17 @@ package ast
 import (
 	"fmt"
 	"strings"
+	"sudonters/libzootr/mido/symbols"
 )
 
 type renderer struct {
 	*strings.Builder
+	symbols *symbols.Table
 }
 
-func Render(node Node) string {
+func Render(node Node, symbols *symbols.Table) string {
 	var sb strings.Builder
-	render := renderer{&sb}
+	render := renderer{&sb, symbols}
 	v := Visitor{
 		AnyOf:      (&render).AnyOf,
 		Boolean:    (&render).Bool,
@@ -66,7 +68,12 @@ func (r *renderer) Every(node Every, visit Visiting) error {
 }
 
 func (r *renderer) Identifier(node Identifier, visit Visiting) error {
-	fmt.Fprintf(r, "($%04X)", node.AsIndex())
+	if r.symbols == nil {
+		fmt.Fprintf(r, "($%04X)", node.AsIndex())
+		return nil
+	}
+	symbol := r.symbols.LookUpByIndex(symbols.Index(node))
+	fmt.Fprintf(r, "($%04X %q)", node.AsIndex(), symbol.Name)
 	return nil
 }
 

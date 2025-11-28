@@ -2,7 +2,7 @@ package bundle
 
 import (
 	"fmt"
-	"sudonters/libzootr/internal/skelly/bitset32"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 )
 
@@ -66,4 +66,20 @@ func (s *single) All(yield RowIter) {
 
 func (s single) Len() int {
 	return 1
+}
+
+type onlyrows bitset32.Bitset
+
+func (this onlyrows) Len() int {
+	return bitset32.Bitset(this).Len()
+}
+
+func (this onlyrows) All(yield RowIter) {
+	var vt table.ValueTuple
+	bits := bitset32.Bitset(this)
+	for rowId := range bitset32.Iter(&bits).All {
+		if !yield(table.RowId(rowId), vt) {
+			return
+		}
+	}
 }

@@ -3,12 +3,13 @@ package query
 import (
 	"errors"
 	"fmt"
-	"math"
 	"reflect"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/bundle"
-	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 	"sudonters/libzootr/internal/table/columns"
+
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 	"github.com/etc-sudonters/substrate/slipup"
@@ -40,6 +41,7 @@ type Query interface {
 	Load(table.ColumnId)
 	Exists(table.ColumnId)
 	NotExists(table.ColumnId)
+	FromSubset(*bitset32.Bitset)
 }
 
 type query struct {
@@ -48,6 +50,11 @@ type query struct {
 	exists    *bitset32.Bitset
 	notExists *bitset32.Bitset
 	optional  *bitset32.Bitset
+	subset    *bitset32.Bitset
+}
+
+func (b *query) FromSubset(subset *bitset32.Bitset) {
+	b.subset = subset
 }
 
 func (b *query) Load(typ table.ColumnId) {
@@ -101,6 +108,7 @@ type Engine interface {
 	SetValues(r table.RowId, vs table.Values) error
 	UnsetValues(r table.RowId, cs table.ColumnIds) error
 	ColumnIdFor(reflect.Type) (table.ColumnId, bool)
+	Membership(table.RowId) (bitset32.Bitset, error)
 }
 
 func MustColumnIdFor(typ reflect.Type, e Engine) table.ColumnId {
@@ -130,7 +138,7 @@ func NewEngine() (*engine, error) {
 		tbl:         table.New(),
 	}
 
-	if _, err := eng.CreateColumn(columns.BitColumnOf[Entry]()); err != nil {
+	if _, err := eng.CreateColumn(columns.BitColumnOf[Entry]("/entity")); err != nil {
 		return nil, err
 	}
 
@@ -194,6 +202,16 @@ func (e *engine) InsertRow(vs ...table.Value) (table.RowId, error) {
 }
 
 func (e engine) Retrieve(b Query) (bundle.Interface, error) {
+	return e.RetrieveWithOptions(b, RetrieveOptions{
+		Bundler: bundle.Bundle,
+	})
+}
+
+type RetrieveOptions struct {
+	Bundler bundle.Bundler
+}
+
+func (e engine) RetrieveWithOptions(b Query, opts RetrieveOptions) (bundle.Interface, error) {
 	q, ok := b.(*query)
 	if !ok {
 		return nil, fmt.Errorf("%T: %w", b, ErrInvalidQuery)
@@ -202,26 +220,81 @@ func (e engine) Retrieve(b Query) (bundle.Interface, error) {
 	predicate := makePredicate(q)
 	fill := bitset32.Bitset{}
 
-	for row, possessed := range e.tbl.Rows {
+	iter := table.Iterate(e.tbl)
+
+	for row, possessed := range iter.UnsafeRows {
 		if predicate.admit(possessed) {
-			fill.Set(uint32(row))
+			bitset32.Set(&fill, row)
 		}
+	}
+
+	if q.subset != nil {
+		fill = fill.Intersect(*q.subset)
 	}
 
 	var columns table.Columns
 	for _, col := range q.cols {
-		columns = append(columns, e.tbl.Cols[col])
+		column, err := e.tbl.Column(col)
+		internal.PanicOnError(err)
+		columns = append(columns, column)
 	}
 
-	return bundle.Bundle(fill, columns)
+	bundler := opts.Bundler
+	if bundler == nil {
+		bundler = bundle.Bundle
+	}
+	return bundler(fill, columns)
 }
 
-func saturatedSet(numBuckets uint32) bitset32.Bitset {
-	buckets := make([]uint32, numBuckets)
-	for i := range buckets {
-		buckets[i] = math.MaxUint32
+func (e engine) columnBundle(colIds table.ColumnIds) table.Columns {
+	var columns table.Columns
+	for _, col := range colIds {
+		column, err := e.tbl.Column(col)
+		internal.PanicOnError(err)
+		columns = append(columns, column)
 	}
-	return bitset32.FromRaw(buckets)
+
+	return columns
+}
+
+func (e engine) ExperimentalRetrieve(b Query, opts RetrieveOptions) (bundle.Interface, error) {
+	q, ok := b.(*query)
+	if !ok {
+		return nil, fmt.Errorf("%T: %w", b, ErrInvalidQuery)
+	}
+
+	predicate := makePredicate(q)
+
+	colId := predicate.exists.Pop()
+	fill, colDoesNotExist := e.tbl.MembersOfColumns(table.ColumnId(colId))
+	if colDoesNotExist != nil {
+		return nil, colDoesNotExist
+	}
+
+	for colId := range bitset32.IterT[table.ColumnId](&predicate.exists).All {
+		members, colDoesNotExist := e.tbl.MembersOfColumns(colId)
+		if colDoesNotExist != nil {
+			return nil, colDoesNotExist
+		}
+
+		fill = fill.Intersect(members)
+	}
+
+	for colId := range bitset32.IterT[table.ColumnId](&predicate.notExists).All {
+		members, colDoesNotExist := e.tbl.MembersOfColumns(colId)
+		if colDoesNotExist != nil {
+			return nil, colDoesNotExist
+		}
+
+		fill = fill.Difference(members)
+	}
+
+	columns := e.columnBundle(q.cols)
+	bundler := opts.Bundler
+	if bundler == nil {
+		bundler = bundle.Bundle
+	}
+	return bundler(fill, columns)
 }
 
 func (e *engine) SetValues(r table.RowId, vs table.Values) error {
@@ -262,7 +335,8 @@ func (e *engine) GetValues(r table.RowId, cs table.ColumnIds) (table.ValueTuple,
 	vt.Cols = make(table.ColumnMetas, len(cs))
 	vt.Values = make(table.Values, len(cs))
 	for i, cid := range cs {
-		c := e.tbl.Cols[cid]
+		c, err := e.tbl.Column(cid)
+		internal.PanicOnError(err)
 		vt.Cols[i].Id = c.Id()
 		vt.Cols[i].T = c.Type()
 		vt.Values[i] = c.Column().Get(r)
@@ -281,6 +355,10 @@ func (e *engine) UnsetValues(r table.RowId, cs table.ColumnIds) error {
 	}
 
 	return nil
+}
+
+func (e *engine) Membership(r table.RowId) (bitset32.Bitset, error) {
+	return e.tbl.Membership(r)
 }
 
 func (e *engine) intoColId(v table.Value) (table.ColumnId, error) {

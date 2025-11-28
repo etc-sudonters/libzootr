@@ -21,14 +21,6 @@ func Identify(name string) *Identifier {
 	return &Identifier{Value: name}
 }
 
-// either a 'quoted literal' or Normalied_Identifier
-func TokenLiteral(t string) *Literal {
-	return &Literal{
-		Kind:  LiteralToken,
-		Value: t,
-	}
-}
-
 func BoolLiteral(b bool) *Literal {
 	return &Literal{
 		Kind:  LiteralBool,
@@ -125,15 +117,13 @@ type (
 		Type() ExprType
 		exprNode()
 	}
-)
 
-type FunctionDecl struct {
-	Identifier string
-	Body       Tree
-	Parameters []string
-}
+	FunctionDecl struct {
+		Identifier string
+		Body       Tree
+		Parameters []string
+	}
 
-type (
 	BoolOp struct {
 		Left  Tree
 		Op    BoolOpKind

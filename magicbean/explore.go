@@ -1,43 +1,41 @@
 package magicbean
 
 import (
-	"context"
 	"fmt"
+	"sudonters/libzootr/components"
 	"sudonters/libzootr/internal"
-	"sudonters/libzootr/internal/skelly/bitset32"
-	"sudonters/libzootr/internal/skelly/graph32"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/code"
 	"sudonters/libzootr/mido/compiler"
 	"sudonters/libzootr/mido/objects"
 	"sudonters/libzootr/zecs"
 
-	"github.com/etc-sudonters/substrate/dontio"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
+	"github.com/etc-sudonters/substrate/skelly/graph32"
 )
 
 type ExplorableEdge struct {
-	Kind   EdgeKind
 	Entity zecs.Entity
-	Rule   RuleCompiled
-	Src    RuleSource
-	Name   Name
+	Kind   components.EdgeKind
+	Rule   components.RuleCompiled
+	Conn   components.Connection
 }
 
 type ExplorableWorld struct {
 	Graph graph32.Directed
-	Edges map[Connection]ExplorableEdge
+	Edges map[components.Connection]ExplorableEdge
 }
 
 func (this ExplorableWorld) Edge(from, to graph32.Node) (ExplorableEdge, bool) {
-	edge, exists := this.Edges[Connection{zecs.Entity(from), zecs.Entity(to)}]
+	conn := components.Connection{From: zecs.Entity(from), To: zecs.Entity(to)}
+	edge, exists := this.Edges[conn]
 	return edge, exists
 }
 
 type Exploration struct {
-	VM      mido.VM
+	VM      *mido.VM
 	Visited *bitset32.Bitset
-	Workset *bitset32.Bitset
-	Objects *objects.Table
+	Pending *bitset32.Bitset
 }
 
 func (this *Exploration) evaluateRule(bytecode compiler.Bytecode) bool {
@@ -52,51 +50,54 @@ func (this *Exploration) evaluateRule(bytecode compiler.Bytecode) bool {
 
 	answer, vmErr := this.VM.Execute(bytecode)
 	if vmErr != nil {
-		fmt.Println(vmErr)
+		fmt.Fprintln(this.VM.Std.Err, vmErr)
 		answer = objects.PackedFalse
 	}
 
 	return this.VM.Truthy(answer)
 }
 
-func (this *Exploration) CanTransit(ctx context.Context, world *ExplorableWorld, from, to graph32.Node) bool {
-	std, nostd := dontio.StdFromContext(ctx)
-	internal.PanicOnError(nostd)
-
+func (this *Exploration) CanTransit(world *ExplorableWorld, from, to graph32.Node) bool {
 	edge, exists := world.Edge(from, to)
 	if !exists {
 		panic(fmt.Errorf("no edge registered between %d %d", from, to))
 	}
-	fmt.Printf("exploring %q\n", edge.Name)
-	if edge.Src != "" {
-		std.WriteLineOut(string(edge.Src))
-	}
 	bytecode := compiler.Bytecode(edge.Rule)
-	this.VM.Dis(std.Out, bytecode)
 	result := this.evaluateRule(bytecode)
-	std.WriteLineOut("\tcrossed? %t\n\n", result)
 	return result
 }
 
 type ExplorationResults struct {
 	Pending bitset32.Bitset
 	Reached bitset32.Bitset
+	Edges   []EdgeHandle
 }
 
-func (this *ExplorableWorld) ExploreAvailableEdges(ctx context.Context, xplr *Exploration) ExplorationResults {
+type EdgeHandle struct {
+	Id  zecs.Entity
+	Def components.Connection
+}
+
+func (this *ExplorableWorld) ExploreAvailableEdges(xplr *Exploration) ExplorationResults {
 	var results ExplorationResults
-	for current := range nodeiter(xplr.Workset).UntilEmpty {
+	for current := range nodeiter(xplr.Pending).UntilEmpty {
 		neighbors, err := this.Graph.Successors(current)
 		internal.PanicOnError(err)
 		neighbors = neighbors.Difference(*xplr.Visited)
 
 		for neighbor := range nodeiter(&neighbors).All {
-			if xplr.CanTransit(ctx, this, current, neighbor) {
+			if xplr.CanTransit(this, current, neighbor) {
 				bitset32.Unset(&neighbors, neighbor)
-				bitset32.Set(xplr.Workset, neighbor)
+				bitset32.Set(xplr.Pending, neighbor)
 				bitset32.Set(&results.Reached, neighbor)
 				bitset32.Set(xplr.Visited, neighbor)
 			}
+
+			edge, _ := this.Edge(current, neighbor)
+			results.Edges = append(results.Edges, EdgeHandle{
+				Def: edge.Conn,
+				Id:  edge.Entity,
+			})
 		}
 
 		if !neighbors.IsEmpty() {

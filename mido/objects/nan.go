@@ -76,6 +76,11 @@ func PackF64(f64 float64) Object {
 	return Object(math.Float64bits(f64))
 }
 
+func UnpackU32(obj Object) uint32 {
+	f64 := UnpackF64(obj)
+	return uint32(f64)
+}
+
 func UnpackF64(obj Object) float64 {
 	f64 := math.Float64frombits(uint64(obj))
 	if math.IsNaN(f64) {
@@ -124,10 +129,10 @@ func UnpackStr32(obj Object) Str32 {
 }
 
 func PackBytes(arr [5]uint8) Object {
-	return Object(bytes(arr).asbits(MASK_BYTES))
+	return Object(Bytes(arr).asbits(MASK_BYTES))
 }
 
-func UnpackBytes(obj Object) bytes {
+func UnpackBytes(obj Object) Bytes {
 	field := bits(obj)
 	if field&MASK_BYTES != MASK_BYTES {
 		panic("not an array")
@@ -173,10 +178,10 @@ const (
 )
 
 var _ encoder = (*bits)(nil)
-var _ encoder = (*bytes)(nil)
+var _ encoder = (*Bytes)(nil)
 
 type bits uint64
-type bytes [5]uint8
+type Bytes [5]uint8
 
 func (this *bits) PutU8(u8 uint8) {
 	*this = *this | bits(u8)<<1
@@ -194,30 +199,30 @@ func (this bits) GetU32() uint32 {
 	return uint32(this >> 9)
 }
 
-func (this bits) asbytes() bytes {
-	var bytes bytes
+func (this bits) asbytes() Bytes {
+	var bytes Bytes
 	bytes.PutU8(this.GetU8())
 	bytes.PutU32(this.GetU32())
 	return bytes
 }
 
-func (this *bytes) PutU8(u8 uint8) {
+func (this *Bytes) PutU8(u8 uint8) {
 	(*this)[0] = u8
 }
 
-func (this bytes) GetU8() uint8 {
+func (this Bytes) GetU8() uint8 {
 	return this[0]
 }
 
-func (this *bytes) PutU32(u32 uint32) {
+func (this *Bytes) PutU32(u32 uint32) {
 	binary.LittleEndian.PutUint32((*this)[1:], u32)
 }
 
-func (this bytes) GetU32() uint32 {
+func (this Bytes) GetU32() uint32 {
 	return binary.LittleEndian.Uint32(this[1:])
 }
 
-func (this bytes) asbits(mask bits) bits {
+func (this Bytes) asbits(mask bits) bits {
 	(&mask).PutU8(this.GetU8())
 	(&mask).PutU32(this.GetU32())
 	return mask

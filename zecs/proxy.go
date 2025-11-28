@@ -26,6 +26,11 @@ func (this *Proxy) AttachFrom(from Attaching) error {
 	return this.AttachAll(from.vs)
 }
 
+func (this *Proxy) Membership() (Membership, error) {
+	membership, err := this.parent.eng.Membership(this.id)
+	return Membership{membership, this.parent}, err
+}
+
 type Attaching struct {
 	vs Values
 }

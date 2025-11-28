@@ -3,8 +3,8 @@ package table
 import (
 	"errors"
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
-	"sudonters/libzootr/internal/skelly/bitset32"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 )
@@ -17,13 +17,16 @@ type ColumnMetas []ColumnMeta
 type ColumnIds []ColumnId
 type Columns []ColumnData
 type Values []Value
-type Row = bitset32.Bitset
-type Rows []*Row
+type Rows []Row
 type ColumnMap map[reflect.Type]Value
 type RowTuple struct {
 	Id RowId
 	ValueTuple
 }
+
+type Row = bitset32.Bitset
+
+var copyRow = bitset32.Copy
 
 func (vt *ValueTuple) Init(cs Columns) {
 	vt.Cols = make(ColumnMetas, len(cs))
@@ -81,45 +84,82 @@ func (v *ValueTuple) ColumnMap() ColumnMap {
 
 func New() *Table {
 	return &Table{
-		Cols:    make([]ColumnData, 0),
-		Rows:    make(Rows, 0),
+		cols:    make([]ColumnData, 0),
+		rows:    make(Rows, 0),
 		indexes: make(map[ColumnId]Index, 0),
+		attrs:   make(map[string]ColumnId, 0),
 	}
 }
 
 type Table struct {
-	Cols    []ColumnData
-	Rows    Rows
+	cols    []ColumnData
+	rows    Rows
 	indexes map[ColumnId]Index
+	attrs   map[string]ColumnId
+}
+
+func (this *Table) GetColumnByAttr(attr string) (ColumnData, error) {
+	cid, exists := this.attrs[attr]
+	if !exists {
+		return ColumnData{}, fmt.Errorf("attribute %q not found", cid)
+	}
+	return this.Column(cid)
+}
+
+func (this *Table) MembersOfColumns(id ColumnId) (bitset32.Bitset, error) {
+	if int(id) > len(this.cols) {
+		return bitset32.Bitset{}, fmt.Errorf("column %d not found", id)
+	}
+
+	col := this.cols[id]
+	return col.Column().Membership(), nil
+}
+
+func (this *Table) Column(id ColumnId) (ColumnData, error) {
+	if int(id) > len(this.cols) {
+		return ColumnData{}, fmt.Errorf("column %d not found", id)
+	}
+
+	return this.cols[id], nil
+}
+
+func (tbl *Table) Membership(r RowId) (bitset32.Bitset, error) {
+	if int(r) >= len(tbl.rows) {
+		return bitset32.Bitset{}, errors.New("row does not exist")
+	}
+
+	membership := tbl.rows[r]
+	return bitset32.Copy(membership), nil
 }
 
 func (tbl *Table) Lookup(c ColumnId, v Value) bitset32.Bitset {
 	if idx, ok := tbl.indexes[c]; ok {
 		return idx.Rows(v)
 	}
-	return tbl.Cols[c].column.ScanFor(v)
+	return tbl.cols[c].column.ScanFor(v)
 }
 
 func (tbl *Table) CreateColumn(b *ColumnBuilder) (ColumnData, error) {
-	id := ColumnId(len(tbl.Cols))
+	id := ColumnId(len(tbl.cols))
 	col := b.build(id)
-	tbl.Cols = append(tbl.Cols, col)
+	tbl.cols = append(tbl.cols, col)
 	if b.index != nil {
 		tbl.indexes[id] = b.index
 	}
+	tbl.attrs[b.attr] = id
 	return col, nil
 }
 
 func (tbl *Table) InsertRow() RowId {
-	id := RowId(len(tbl.Rows))
-	tbl.Rows = append(tbl.Rows, &bitset32.Bitset{})
+	id := RowId(len(tbl.rows))
+	tbl.rows = append(tbl.rows, bitset32.Bitset{})
 	return id
 }
 
 func (tbl *Table) SetValue(r RowId, c ColumnId, v Value) error {
-	col := tbl.Cols[c]
+	col := tbl.cols[c]
 	col.column.Set(r, v)
-	row := tbl.Rows[r]
+	row := &tbl.rows[r]
 	row.Set(uint32(c))
 	if idx, ok := tbl.indexes[c]; ok {
 		idx.Set(r, v)
@@ -128,12 +168,22 @@ func (tbl *Table) SetValue(r RowId, c ColumnId, v Value) error {
 }
 
 func (tbl *Table) UnsetValue(r RowId, c ColumnId) error {
-	col := tbl.Cols[c]
+	col := tbl.cols[c]
 	col.column.Unset(r)
-	row := tbl.Rows[r]
+	row := &tbl.rows[r]
 	row.Unset(uint32(c))
 	if idx, ok := tbl.indexes[c]; ok {
 		idx.Unset(r)
 	}
 	return nil
+}
+
+func (tbl *Table) AttrTable() map[string]ColumnMetadata {
+	attrs := make(map[string]ColumnMetadata, len(tbl.cols))
+
+	for attr, id := range tbl.attrs {
+		attrs[attr] = tbl.cols[id]
+	}
+
+	return attrs
 }

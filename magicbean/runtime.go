@@ -3,6 +3,7 @@ package magicbean
 import (
 	"fmt"
 	"sudonters/libzootr/mido/objects"
+	"sudonters/libzootr/settings"
 	"sudonters/libzootr/zecs"
 )
 
@@ -68,21 +69,15 @@ func CreateBuiltInDefs() []objects.BuiltInFunctionDef {
 	}
 }
 
-type ShuffleFlags uint64
-
-const (
-	SHUFFLE_OCARINA_NOTES = 1
-)
-
-func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, flags ShuffleFlags) {
+func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, flags settings.ShufflingFlags) {
 	builtins.Has = func(tbl *objects.Table, args []objects.Object) (objects.Object, error) {
 		if len(args) != 2 {
 			return objects.Null, fmt.Errorf("has expects 2 arguments, got %d", len(args))
 		}
 
 		ptr := objects.UnpackPtr32(args[0])
-		qty := objects.UnpackF64(args[1])
-		result := pocket.Has(zecs.Entity(ptr.Addr), qty)
+		qty := objects.UnpackU32(args[1])
+		result := pocket.Has(zecs.Entity(ptr.Addr), int(qty))
 		return objects.PackBool(result), nil
 	}
 
@@ -113,8 +108,8 @@ func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, flags ShuffleFlag
 	}
 
 	builtins.HasDungeonRewards = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
-		qty := objects.UnpackF64(args[0])
-		return objects.PackBool(pocket.HasDungeonRewards(qty)), nil
+		qty := objects.UnpackU32(args[0])
+		return objects.PackBool(pocket.HasDungeonRewards(int(qty))), nil
 	}
 
 	builtins.HasHearts = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
@@ -123,16 +118,16 @@ func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, flags ShuffleFlag
 	}
 
 	builtins.HasStones = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
-		qty := objects.UnpackF64(args[0])
-		return objects.PackBool(pocket.HasStones(qty)), nil
+		qty := objects.UnpackU32(args[0])
+		return objects.PackBool(pocket.HasStones(int(qty))), nil
 	}
 
 	builtins.HasMedallions = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
-		qty := objects.UnpackF64(args[0])
-		return objects.PackBool(pocket.HasMedallions(qty)), nil
+		qty := objects.UnpackU32(args[0])
+		return objects.PackBool(pocket.HasMedallions(int(qty))), nil
 	}
 
-	if flags&SHUFFLE_OCARINA_NOTES == SHUFFLE_OCARINA_NOTES {
+	if settings.HasFlag(flags, settings.ShuffleOcarinaNotes) {
 		builtins.HasNotesForSong = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
 			ptr := objects.UnpackPtr32(args[0])
 			return objects.PackBool(pocket.HasAllNotes(zecs.Entity(ptr.Addr))), nil

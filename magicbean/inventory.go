@@ -4,53 +4,87 @@ import (
 	"sudonters/libzootr/zecs"
 )
 
-func NewInventory() Inventory {
-	return Inventory{make(map[zecs.Entity]float64)}
+func EmptyInventory() Inventory {
+	return Inventory(make(map[zecs.Entity]int))
 }
 
-type Inventory struct {
-	onhand map[zecs.Entity]float64
+func CopyInventory(i Inventory) Inventory {
+	copy := make(Inventory, len(i))
+
+	for k, v := range i {
+		copy[k] = v
+	}
+	return copy
 }
 
-func (this *Inventory) CollectOne(entity zecs.Entity) {
+func DiffInventories(old, new Inventory) Inventory {
+	diff := make(Inventory, len(new))
+
+	for k := range new {
+		had := old[k]
+		has := new[k]
+		if has-had == 0 {
+			continue
+		}
+		diff[k] = has - had
+	}
+
+	return diff
+}
+
+type Inventory map[zecs.Entity]int
+
+func (this Inventory) CollectOne(entity zecs.Entity) {
 	this.Collect(entity, 1)
 }
 
-func (this *Inventory) Collect(entity zecs.Entity, n float64) {
-	has := this.onhand[entity]
-	this.onhand[entity] = has + n
+func (this Inventory) Collect(entity zecs.Entity, n int) {
+	this[entity] += n
 }
 
-func (this *Inventory) Remove(entity zecs.Entity, n float64) float64 {
-	has := this.onhand[entity]
+func (this Inventory) CollectOneEach(entities []zecs.Entity) {
+	for _, entity := range entities {
+		this.Collect(entity, 1)
+	}
+}
+
+func (this Inventory) Remove(entity zecs.Entity, n int) int {
+	has := this[entity]
 
 	switch {
 	case has == 0:
 		return 0
 	case n == has:
-		this.onhand[entity] = 0
+		delete(this, entity)
 		return n
 	case n < has:
-		this.onhand[entity] = has - n
+		this[entity] = has - n
 		return n
 	case n > has:
-		this.onhand[entity] = 0
+		delete(this, entity)
 		return has
 	default:
 		panic("unreachable")
 	}
 }
 
-func (this *Inventory) Count(entity zecs.Entity) float64 {
-	return this.onhand[entity]
+func (this Inventory) Count(entity zecs.Entity) int {
+	return this[entity]
 }
 
-func (this *Inventory) Sum(entities []zecs.Entity) float64 {
-	var total float64
+func (this Inventory) Sum(entities []zecs.Entity) int {
+	var total int
 
 	for _, entity := range entities {
-		total += this.onhand[entity]
+		total += this[entity]
 	}
 
 	return total
+}
+
+func (this Inventory) AddFrom(new Inventory) {
+	for item, qty := range new {
+		has := this[item]
+		this[item] = has + qty
+	}
 }
