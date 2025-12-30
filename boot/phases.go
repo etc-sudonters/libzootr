@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"slices"
 	"sudonters/libzootr/magicbean"
@@ -55,6 +56,7 @@ func Phase2_ImportFromFiles(ctx context.Context, settings *settings.Model, ocm *
 		}
 		defer fh.Close()
 
+		slog.DebugContext(ctx, "loading spoiler log", "path", paths.Spoiler)
 		if err := (LoadSpoilerData(ctx, fh, settings, &set.Nodes, &set.Tokens)); err != nil {
 			return fmt.Errorf("failed while loading spoiler log file %q: %w", paths.Spoiler, err)
 		}

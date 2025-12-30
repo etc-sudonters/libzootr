@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 	"sudonters/libzootr/components"
 	"sudonters/libzootr/internal/json"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/settings"
-
-	"github.com/etc-sudonters/substrate/dontio"
 )
 
 func malformed(err error) error {
@@ -25,21 +24,41 @@ func LoadSpoilerData(
 	nodes *tracking.Nodes,
 	tokens *tracking.Tokens) error {
 
-	if std, err := dontio.StdFromContext(ctx); err == nil {
-		std.WriteLineOut("Loading spoiler data...")
-	}
-
 	reader := json.NewParser(json.NewScanner(r))
 	obj, err := reader.ReadObject()
 	if err != nil {
 		return malformed(err)
 	}
+	var property string
+	var propertyErr error
+
+	defer func() {
+		if recovered := recover(); r != nil {
+			sample := make([]byte, 0, 64)
+			sampledSize, sampleErr := r.Read(sample)
+			if sampleErr != nil {
+				sample = []byte(fmt.Sprintf("<UNABLE TO SAMPLE: %s>", sampleErr))
+			} else if sampledSize == 0 {
+				sample = []byte("<UNABLE TO SAMPLE: NOTHING TO SAMPLE>")
+			}
+
+			slog.ErrorContext(
+				ctx,
+				"failed to import spoiler data",
+				"property", property,
+				"parser", reader.Dump(),
+			)
+			panic(recovered)
+		}
+	}()
 
 	for obj.More() {
-		property, err := obj.ReadPropertyName()
+		property, propertyErr = obj.ReadPropertyName()
 		if err != nil {
-			return malformed(err)
+			return malformed(propertyErr)
 		}
+
+		slog.DebugContext(ctx, "importing from spoiler log", "kind", property)
 
 		switch property {
 		case "settings", "randomized_settings":
@@ -86,6 +105,7 @@ func CopySettings(these *settings.Model, obj *json.ObjectParser) error {
 		if err != nil {
 			return err
 		}
+		slog.Debug("reading setting property {name}", "name", setting)
 		if err := readSetting(setting, these, obj); err != nil {
 			return invalidSettingFor(setting, err)
 		}
@@ -407,9 +427,14 @@ func readSetting(propertyName string, these *settings.Model, obj *json.ObjectPar
 		"shuffle_dungeon_entrances", "shuffle_bosses", "shuffle_ganon_tower",
 		"shuffle_overworld_entrances", "shuffle_gerudo_valley_river_exit",
 		"owl_drops", "spawn_positions":
+		slog.Debug("discarding spoiler setting", "name", propertyName)
 		return obj.DiscardValue()
 
+	case "user_message":
+		slog.Debug("not importing setting", "name", propertyName)
+		obj.DiscardValue()
 	default:
+		slog.Debug("discarding spoiler setting", "name", propertyName)
 		return obj.DiscardValue()
 	}
 

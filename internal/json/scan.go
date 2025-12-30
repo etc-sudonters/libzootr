@@ -37,6 +37,19 @@ type Scanner struct {
 	pos, line, char int
 }
 
+func (this *Scanner) Dump() map[string]any {
+	return map[string]any{
+		"scanned": this.scanned.String(),
+		"pos":     this.pos,
+		"line":    this.line,
+		"char":    this.char,
+		"inner": map[string]any{
+			"text":  this.inner.Text(),
+			"error": this.inner.Err(),
+		},
+	}
+}
+
 func (this *Scanner) makePositionedError(cause error) error {
 	if cause != nil {
 		this.scanned = scanned_err

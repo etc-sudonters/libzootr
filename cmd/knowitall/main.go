@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -16,6 +17,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	var opts cliOptions
 	var appExitCode stageleft.ExitCode = stageleft.ExitSuccess
 	realStd := dontio.StdIo()
@@ -24,34 +26,48 @@ func main() {
 	}()
 	defer func() {
 		if r := recover(); r != nil {
+			stacktrace := string(debug.Stack())
+			slog.ErrorContext(ctx, "panic", "recovered", fmt.Sprintf("%v", r), "traceback", stacktrace)
 			if err, ok := r.(error); ok {
 				realStd.WriteLineErr("%s", err)
 			} else if str, ok := r.(string); ok {
 				realStd.WriteLineErr("%s", str)
 			}
-			_, _ = realStd.Err.Write(debug.Stack())
+			_, _ = realStd.Err.Write([]byte(stacktrace))
 			if appExitCode != stageleft.ExitSuccess {
 				appExitCode = stageleft.AsExitCode(r, stageleft.ExitCode(126))
 			}
 		}
 	}()
 
-	ctx := context.Background()
 	args := os.Args[1:]
 	flags := flag.CommandLine
+
 	if argsErr := (&opts).init(args, flags); argsErr != nil {
 		appExitCode = 2
+		if opts.debug {
+			realStd.WriteLineErr("debug: %#v", os.Args[1:])
+		}
 		realStd.WriteLineErr(argsErr.Error())
 		return
 	}
-	appStd := dontio.Std{}
-	cleanup, err := redirectAppStd(&appStd, &opts)
-	defer cleanup()
-	if err != nil {
-		realStd.WriteLineErr("Failed to redirect application std{in,out,err}\n%v", err)
+
+	loggingErr := configureLogging(ctx, &opts)
+	if loggingErr != nil {
+		realStd.WriteLineErr("Failed to configure application logging:\n:%v", loggingErr)
 		appExitCode = 3
 		return
 	}
+
+	appStd := dontio.Std{}
+	cleanupStd, redirectErr := redirectAppStd(&appStd, &opts)
+	defer cleanupStd()
+	if redirectErr != nil {
+		realStd.WriteLineErr("Failed to redirect application std{in,out,err}\n%v", redirectErr)
+		appExitCode = 3
+		return
+	}
+
 	ctx = dontio.AddStdToContext(ctx, &appStd)
 
 	if err := runMain(ctx, &appStd, &opts); err != nil {
@@ -92,6 +108,7 @@ func (arg missingRequired) Error() string {
 }
 
 type cliOptions struct {
+	debug    bool
 	logDir   string
 	worldDir string
 	dataDir  string
@@ -153,4 +170,5 @@ var clivars = map[string]clivar{
 	"spoiler": {"spoiler", "Path to spoiler log to import", "", func(opts *cliOptions) any { return &opts.spoiler }},
 	"world":   {"world", "Directory where logic files are located", "", func(opts *cliOptions) any { return &opts.worldDir }},
 	"seed":    {"seed", "Seed for generation", defaultSeed, func(opts *cliOptions) any { return &opts.seed }},
+	"debug":   {"debug", "Set to enable debug output", false, func(opts *cliOptions) any { return &opts.debug }},
 }

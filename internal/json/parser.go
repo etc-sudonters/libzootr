@@ -30,6 +30,13 @@ type Token struct {
 	Body []byte
 }
 
+func (this Token) dump() map[string]any {
+	return map[string]any{
+		"kind": this.Kind.String(),
+		"body": string(this.Body),
+	}
+}
+
 type Kind uint8
 
 func (this Kind) String() string {
@@ -64,6 +71,15 @@ func NewParser(scanner *Scanner) *Parser {
 	p.Next()
 	p.Next()
 	return p
+}
+
+func (this *Parser) Dump() map[string]any {
+	return map[string]any{
+		"current-token": this.curr.dump(),
+		"next-token":    this.peek.dump(),
+		"scanner":       this.scanner.Dump(),
+	}
+
 }
 
 func (this *Parser) makeError(cause error) error {
