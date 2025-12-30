@@ -57,29 +57,25 @@ func (this BuiltIns) Table() objects.BuiltInFunctions {
 
 func CreateBuiltInDefs() []objects.BuiltInFunctionDef {
 	return []objects.BuiltInFunctionDef{
-		{Name: "can_live_dmg", Params: -1},
-		{Name: "check_tod_access", Params: 1},
-		{Name: "has", Params: 2},
-		{Name: "has_anyof", Params: -1},
-		{Name: "has_bottle", Params: 0},
-		{Name: "has_dungeon_rewards", Params: 1},
-		{Name: "has_every", Params: -1},
-		{Name: "has_hearts", Params: 1},
-		{Name: "has_medallions", Params: 1},
-		{Name: "has_notes_for_song", Params: 1},
-		{Name: "has_stones", Params: 1},
-		{Name: "is_adult", Params: 0},
-		{Name: "is_child", Params: 0},
-		{Name: "is_starting_age", Params: 0},
+		{Name: "can_live_dmg", ParamCount: -1},
+		{Name: "check_tod_access", ParamCount: 1},
+		{Name: "has", ParamCount: 2},
+		{Name: "has_anyof", ParamCount: -1},
+		{Name: "has_bottle", ParamCount: 0},
+		{Name: "has_dungeon_rewards", ParamCount: 1},
+		{Name: "has_every", ParamCount: -1},
+		{Name: "has_hearts", ParamCount: 1},
+		{Name: "has_medallions", ParamCount: 1},
+		{Name: "has_notes_for_song", ParamCount: 1},
+		{Name: "has_stones", ParamCount: 1},
+		{Name: "is_adult", ParamCount: 0},
+		{Name: "is_child", ParamCount: 0},
+		{Name: "is_starting_age", ParamCount: 0},
 	}
 }
 
 func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, flags settings.ShufflingFlags) {
 	builtins.Has = func(tbl *objects.Table, args []objects.Object) (objects.Object, error) {
-		if len(args) != 2 {
-			return objects.Null, fmt.Errorf("has expects 2 arguments, got %d", len(args))
-		}
-
 		ptr := objects.UnpackPtr32(args[0])
 		qty := objects.UnpackU32(args[1])
 		result := pocket.Has(zecs.Entity(ptr.Addr), int(qty))

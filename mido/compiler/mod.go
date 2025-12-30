@@ -142,8 +142,8 @@ func (this *compiler) Invoke(node ast.Invoke, visit ast.Visiting) error {
 	}
 
 	def := this.objects.FunctionDefinition(callee)
-	if argCount := len(node.Args); def.Params > -1 && def.Params != argCount {
-		return fmt.Errorf("%q expects %d arguments but received %d", def.Name, def.Params, argCount)
+	if argCount := len(node.Args); def.ParamCount > -1 && def.ParamCount != argCount {
+		return fmt.Errorf("%q expects %d arguments but received %d", def.Name, def.ParamCount, argCount)
 	}
 
 	if this.trySpecializeInvoke(node, callee, def) {
@@ -196,7 +196,7 @@ func (this *compiler) trySpecializeInvoke(node ast.Invoke, callee *symbols.Sym, 
 		}
 	}
 
-	if def.Params == 0 {
+	if def.ParamCount == 0 {
 		ptr := this.objects.PtrFor(callee)
 		this.consts[ptr] = struct{}{}
 		this.names[ptr] = callee.Name

@@ -1,8 +1,8 @@
 package objects
 
 type BuiltInFunctionDef struct {
-	Name   string
-	Params int
+	Name       string
+	ParamCount int
 }
 type BuiltInFunction func(*Table, []Object) (Object, error)
 type BuiltInFunctions []BuiltInFunction
