@@ -17,6 +17,14 @@ func TestMyUnderstanding(t *testing.T) {
 	}
 }
 
+func TestScansEmptyString(t *testing.T) {
+	json := []byte{'"', '"'}
+	scanner := scanner(json)
+	if err := scanner.DiscardAll(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestScansNewLinesProperly(t *testing.T) {
 	json := []byte("[\n\r{\n\"property\"\r:\"\nsome\r\nnew\nlines\r\"}\r\n//acomment\r\n]")
 	t.Log(string(json))

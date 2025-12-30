@@ -205,9 +205,15 @@ func (this *Scanner) scanSpace(buffer []byte, _ bool, n *int) byte {
 }
 
 func (this *Scanner) scanString(buffer []byte, atEof bool, n *int) ([]byte, error) {
+	startAt := *n
+
+	if buffer[startAt] == '"' {
+		(*n)++
+		return nil, nil
+	}
+
 	size := len(buffer) - (*n)
 	token := make([]byte, size)
-	startAt := *n
 	i := 0
 
 	for _, char := range buffer[startAt:] {

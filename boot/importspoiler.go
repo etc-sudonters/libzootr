@@ -33,28 +33,15 @@ func LoadSpoilerData(
 	var propertyErr error
 
 	defer func() {
-		if recovered := recover(); r != nil {
-			sample := make([]byte, 0, 64)
-			sampledSize, sampleErr := r.Read(sample)
-			if sampleErr != nil {
-				sample = []byte(fmt.Sprintf("<UNABLE TO SAMPLE: %s>", sampleErr))
-			} else if sampledSize == 0 {
-				sample = []byte("<UNABLE TO SAMPLE: NOTHING TO SAMPLE>")
-			}
-
-			slog.ErrorContext(
-				ctx,
-				"failed to import spoiler data",
-				"property", property,
-				"parser", reader.Dump(),
-			)
+		if recovered := recover(); recovered != nil {
+			slog.ErrorContext(ctx, "failed to import spoiler data", "property", property, "parser", reader.Dump())
 			panic(recovered)
 		}
 	}()
 
 	for obj.More() {
 		property, propertyErr = obj.ReadPropertyName()
-		if err != nil {
+		if propertyErr != nil {
 			return malformed(propertyErr)
 		}
 

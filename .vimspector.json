@@ -1,17 +1,30 @@
 {
+    "adapters": {
+        "dlv-dap": {
+            "variables": {
+                "port": "${unusedLocalPort}"
+            },
+            "command": [
+                "$GOPATH/bin/dlv",
+                "dap",
+                "--listen",
+                "127.0.0.1:${port}"
+            ],
+            "port": "${port}"
+        }
+    },
     "configurations": {
         "query": {
-            "adapter": "vscode-go",
+            "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
                 "program": "${workspaceRoot}/cmd/query/",
                 "args": [],
-                "mode": "debug",
-                "dlvToolPath": "$GOPATH/bin/dlv"
+                "mode": "debug"
             }
         },
         "zoodle": {
-            "adapter": "vscode-go",
+            "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
                 "program": "${workspaceRoot}/cmd/zoodle/",
@@ -23,18 +36,16 @@
                     "-s",
                     "${workspaceRoot}/.data/spoiler.json"
                 ],
-                "mode": "debug",
-                "dlvToolPath": "$GOPATH/bin/dlv"
+                "mode": "debug"
             }
         },
         "test": {
-            "adapter": "vscode-go",
+            "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
-                "program": "${fileDirname}",
+                "program": "${fileDirname}/...",
                 "args": [],
-                "mode": "test",
-                "dlvToolPath": "$GOPATH/bin/dlv"
+                "mode": "test"
             }
         }
     }
