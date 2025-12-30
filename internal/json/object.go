@@ -9,13 +9,17 @@ type ObjectParser struct {
 	p *Parser
 }
 
+func (this *ObjectParser) Unexpected() error {
+	return this.p.Unexpected(&this.p.curr)
+}
+
 func (this *ObjectParser) ReadPropertyName() (string, error) {
 	str, err := this.p.ReadString()
 	if err != nil {
 		return "", err
 	}
 	if this.p.curr.Kind != colon {
-		return str, this.p.unexpected(&this.p.curr)
+		return str, this.p.Unexpected(&this.p.curr)
 	}
 	this.p.Next()
 	return str, nil

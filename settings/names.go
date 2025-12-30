@@ -43,6 +43,7 @@ var names = []string{
 	"open_forest",
 	"open_kakariko",
 	"plant_beans",
+	"scarecrow_behavior",
 	"selected_adult_trade_item",
 	"shuffle_dungeon_entrances",
 	"shuffle_empty_pots",

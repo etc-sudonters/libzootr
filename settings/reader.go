@@ -56,6 +56,8 @@ func (this Reader) String(name string) (string, error) {
 		val = this.Logic.Damage.Bonks.String()
 	case "shuffle_gerudo_fortress_heart_piece":
 		val = "remove"
+	case "scarecrow_behavior":
+		val = this.Logic.Scarecrow.String()
 	default:
 		return val, unknown(name)
 	}
@@ -164,7 +166,6 @@ func (this Reader) Bool(name string) (bool, error) {
 	case "disable_trade_revert":
 		//self.shuffle_interior_entrances or settings.shuffle_overworld_entrances or settings.adult_trade_shuffle
 		val = this.Logic.Connections.Interior != 0 || this.Logic.Connections.Overworld != 0 || this.Logic.Trade.AdultTradeShuffle
-
 	default:
 		return val, unknown(name)
 	}

@@ -6,6 +6,7 @@ type Logic struct {
 	FixBrokenDrops   bool
 	HintsRevealed    HintsRevealed
 	FreeBombchuDrops bool
+	Scarecrow        ScarecrowBehavior
 
 	Spawns struct {
 		TimeOfDay  TimeOfDay
@@ -97,7 +98,8 @@ type Logic struct {
 		Trials        TrialFlag
 	}
 
-	Tricks map[string]bool
+	Tricks   map[string]bool
+	Glitches map[string]bool
 }
 
 func finalizeLogic(_ *Zootr, _ *Logic) error {

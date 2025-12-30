@@ -142,3 +142,15 @@ func ReadStringArrayInto(r Reader, strs *[]string) (err error) {
 	}
 	return
 }
+
+func ReduceStringArrayInto[T any](r Reader, seed T, reduce func(T, string) (T, error)) (T, error) {
+	var err error
+	for _, str := range ReadStringArray(r, &err) {
+		seed, err = reduce(seed, str)
+		if err != nil {
+			return seed, err
+		}
+	}
+
+	return seed, err
+}

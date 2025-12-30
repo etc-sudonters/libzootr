@@ -787,11 +787,12 @@ const (
 	AdultTradeEyeballFrog
 	AdultTradeEyedrops
 	AdultTradeClaimCheck
+	AdultTradeCojiro
 	AdultTradeItemsAll = AdultTradePocketEgg | AdultTradePocketCucco |
 		AdultTradeOddMushroom | AdultTradeOddPotion |
 		AdultTradePoachersSaw | AdultTradeBrokenSword |
 		AdultTradePrescription | AdultTradeEyeballFrog |
-		AdultTradeEyedrops | AdultTradeClaimCheck
+		AdultTradeEyedrops | AdultTradeClaimCheck | AdultTradeCojiro
 
 	ChildTradeItemWeirdEgg ChildTradeItems = iota
 	ChildTradeItemChicken
@@ -862,6 +863,8 @@ func ParseAdultTradeItem(raw string) (AdultTradeItems, error) {
 		return AdultTradeEyedrops, nil
 	case "Claim Check":
 		return AdultTradeClaimCheck, nil
+	case "Cojiro":
+		return AdultTradeCojiro, nil
 	default:
 		return 0, fmt.Errorf("unknown adult trade shuffle item %q", raw)
 	}
@@ -1013,10 +1016,16 @@ const (
 type ShuffleSongComposition uint8
 
 const (
-	ShuffleSongCompositionOff ShuffleSongComposition = iota
-	ShuffleSongCompositionFrogs
+	ShuffleSongCompositionOff ShuffleSongComposition = 1 << iota
+	// maps to 'frog' in ootr settings
+	ShuffleSongCompositionEffect
 	ShuffleSongCompositionWarp
-	ShuffleSongCompositionAll
+	// maps to 'frog2' in ootrsettings
+	ShuffleSongCompositionFrogMinigame
+
+	ShuffleSongCompositionAll = ShuffleSongCompositionEffect |
+		ShuffleSongCompositionWarp |
+		ShuffleSongCompositionFrogMinigame
 )
 
 func ParseShuffleSongComposition(raw string) (ShuffleSongComposition, error) {
@@ -1024,12 +1033,48 @@ func ParseShuffleSongComposition(raw string) (ShuffleSongComposition, error) {
 	case "off":
 		return ShuffleSongCompositionOff, nil
 	case "frog":
-		return ShuffleSongCompositionFrogs, nil
+		return ShuffleSongCompositionEffect, nil
 	case "warp":
 		return ShuffleSongCompositionWarp, nil
+	case "frog2":
+		return ShuffleSongCompositionFrogMinigame, nil
 	case "all":
 		return ShuffleSongCompositionAll, nil
 	default:
 		return 0, fmt.Errorf("unknown shuffle song composition setting %q", raw)
+	}
+}
+
+type ScarecrowBehavior uint8
+
+const (
+	ScarecrowBehaviorVanilla = iota
+	ScarecrowBehaviorFast
+	ScarecrowBehaviorFree
+)
+
+func ParseScarecrownBehavior(raw string) (ScarecrowBehavior, error) {
+	switch raw {
+	case "vanilla":
+		return ScarecrowBehaviorVanilla, nil
+	case "fast":
+		return ScarecrowBehaviorFast, nil
+	case "free":
+		return ScarecrowBehaviorFree, nil
+	default:
+		return 0, fmt.Errorf("unknown scarecrow_behavior %q", raw)
+	}
+}
+
+func (this ScarecrowBehavior) String() string {
+	switch this {
+	case ScarecrowBehaviorVanilla:
+		return "vanilla"
+	case ScarecrowBehaviorFast:
+		return "fast"
+	case ScarecrowBehaviorFree:
+		return "free"
+	default:
+		panic(fmt.Errorf("unknown scarecrow_behavior value %#v", this))
 	}
 }

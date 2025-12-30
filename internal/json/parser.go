@@ -86,7 +86,7 @@ func (this *Parser) makeError(cause error) error {
 	return this.scanner.makePositionedError(cause)
 }
 
-func (this *Parser) unexpected(t *Token) error {
+func (this *Parser) Unexpected(t *Token) error {
 	return this.makeError(fmt.Errorf("unexpected token %s: %q", scanned(t.Kind), string(t.Body)))
 }
 
@@ -205,7 +205,7 @@ func (this *Parser) ReadBool() (bool, error) {
 		this.Next()
 		return false, nil
 	} else {
-		return false, this.unexpected(&this.curr)
+		return false, this.Unexpected(&this.curr)
 	}
 }
 
@@ -215,7 +215,7 @@ func (this *Parser) expect(expected Kind) (Token, error) {
 	}
 
 	if this.curr.Kind != expected {
-		return Token{Kind: ERR}, this.unexpected(&this.curr)
+		return Token{Kind: ERR}, this.Unexpected(&this.curr)
 	}
 
 	return this.curr, nil

@@ -11,6 +11,8 @@ import (
 	"sudonters/libzootr/internal/json"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/settings"
+
+	"github.com/etc-sudonters/substrate/slipup"
 )
 
 func malformed(err error) error {
@@ -92,8 +94,9 @@ func CopySettings(these *settings.Model, obj *json.ObjectParser) error {
 		if err != nil {
 			return err
 		}
-		slog.Debug("reading setting property {name}", "name", setting)
+		slog.Debug("reading setting property", "name", setting)
 		if err := readSetting(setting, these, obj); err != nil {
+			slog.Error("failed to read property", "name", setting, "error", err)
 			return invalidSettingFor(setting, err)
 		}
 	}
@@ -179,10 +182,6 @@ func readSetting(propertyName string, these *settings.Model, obj *json.ObjectPar
 		"bridge_rewards",
 		"bridge_tokens",
 		"bridge_hearts":
-		if these.Logic.WinConditions.Bridge.Amount() != 0 {
-			return errors.New("bridge condition already set")
-		}
-
 		return parsePrefixedConditionInto(
 			obj,
 			"bridge_",
@@ -352,7 +351,7 @@ func readSetting(propertyName string, these *settings.Model, obj *json.ObjectPar
 	case "ruto_already_f1_jabu":
 		return json.ReadBoolInto(obj, &these.Generation.RutoAlreadyOnFloor1)
 	case "ocarina_songs":
-		return json.ParseStringInto(obj, &these.Logic.Shuffling.SongComposition, settings.ParseShuffleSongComposition)
+		return parseShuffledOcarinaSongs(obj, these)
 	case "damage_multiplier":
 		return json.ParseStringInto(obj, &these.Logic.Damage.Multiplier, settings.ParseDamageMultiplier)
 	case "deadly_bonks":
@@ -401,6 +400,8 @@ func readSetting(propertyName string, these *settings.Model, obj *json.ObjectPar
 		}
 		these.Logic.Trade.AdultItems = adultTradeItems
 		return err
+	case "scarecrow_behavior":
+		return json.ParseStringInto(obj, &these.Logic.Scarecrow, settings.ParseScarecrownBehavior)
 	case "correct_chest_appearances", "chest_textures_specific",
 		"minor_items_as_major_chest", "correct_potcrate_appearances",
 		"key_appearance_match_dungeon", "clearer_hints", "hints", "hint_dist",
@@ -502,4 +503,29 @@ func readPlacedItem(obj *json.ObjectParser) (placed, error) {
 
 func invalidSettingFor(name string, cause error) error {
 	return fmt.Errorf("invalid value for %q: %w", name, cause)
+}
+
+func parseShuffledOcarinaSongs(obj *json.ObjectParser, these *settings.Model) error {
+	switch obj.Current().Kind {
+	case json.STRING:
+		slog.Debug("parsing ocarina_songs as string")
+		return json.ParseStringInto(obj, &these.Logic.Shuffling.SongComposition, settings.ParseShuffleSongComposition)
+	case json.ARR_OPEN:
+		slog.Debug("parsing ocarina_songs as array")
+		result, err := json.ReduceStringArrayInto(
+			obj,
+			these.Logic.Shuffling.SongComposition,
+			func(current settings.ShuffleSongComposition, input string) (settings.ShuffleSongComposition, error) {
+				val, err := settings.ParseShuffleSongComposition(input)
+				if err != nil {
+					return current, err
+				}
+				return current | val, nil
+			},
+		)
+		these.Logic.Shuffling.SongComposition = result
+		return err
+	default:
+		return slipup.Describe(obj.Unexpected(), "expected ocarina_songs to be a string or array of strings")
+	}
 }

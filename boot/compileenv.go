@@ -166,6 +166,15 @@ func installCompilerFunctions(these *settings.Model) mido.ConfigureCompiler {
 			}
 		}
 
+		isGlitchEnabled := func(args []ast.Node, _ ast.Rewriting) (ast.Node, error) {
+			switch arg := args[0].(type) {
+			case ast.String:
+				return ast.Boolean(these.Logic.Glitches[string(arg)]), nil
+			default:
+				return nil, fmt.Errorf("is_glitch_enabled expects string as first argument got %#v", arg)
+			}
+		}
+
 		hasAllNotesForSong := func(args []ast.Node, _ ast.Rewriting) (ast.Node, error) {
 			if !settings.HasFlag(these.Logic.Shuffling.Flags, settings.ShuffleOcarinaNotes) {
 				return ast.Boolean(true), nil
@@ -186,6 +195,7 @@ func installCompilerFunctions(these *settings.Model) mido.ConfigureCompiler {
 			return optimizer.CompilerFunctionTable{
 				"region_has_shortcuts":   regionHasShortcuts,
 				"is_trick_enabled":       isTrickEnabled,
+				"is_glitch_enabled":      isGlitchEnabled,
 				"had_night_start":        hadNightStart,
 				"has_all_notes_for_song": hasAllNotesForSong,
 				"at_dampe_time":          hasTodAccess,
