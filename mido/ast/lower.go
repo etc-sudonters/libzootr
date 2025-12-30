@@ -103,15 +103,8 @@ func Lower(tbl *symbols.Table, node ruleparser.Tree) (Node, error) {
 
 		return invoke, err
 	case *ruleparser.Identifier:
-		if trimmed, didTrim := strings.CutPrefix(node.Value, isTrickEnabledPrefix); didTrim {
-			//TODO how to not special case
-			if node.Value != "logic_rules" {
-				return createCall(tbl, "is_trick_enabled", ruleparser.StringLiteral(trimmed))
-			}
-		}
-		if trimmed, didTrim := strings.CutPrefix(node.Value, isGlitchEnabledPrefix); didTrim {
-			//TODO hmmmm at leat there's more info now
-			return createCall(tbl, "is_glitch_enabled", ruleparser.StringLiteral(trimmed))
+		if rewritten, err := tryLowerSpecialIdent(tbl, node); rewritten != nil || err != nil {
+			return rewritten, err
 		}
 		symbol := tbl.Declare(node.Value, symbols.UNKNOWN)
 		return IdentifierFrom(symbol), nil
@@ -168,4 +161,22 @@ func createCall(tbl *symbols.Table, name string, args ...ruleparser.Tree) (Node,
 	}
 
 	return invoke, err
+}
+
+func tryLowerSpecialIdent(tbl *symbols.Table, node *ruleparser.Identifier) (Node, error) {
+	if node.Value == "logic_rules" {
+		return nil, nil
+	}
+	parts := strings.SplitN(node.Value, "_", 2)
+	if len(parts) == 1 {
+		return nil, nil
+	}
+	switch parts[0] {
+	case "logic", "adv":
+		return createCall(tbl, "is_trick_enabled", ruleparser.StringLiteral(parts[1]))
+	case "glitch":
+		return createCall(tbl, "is_glitch_enabled", ruleparser.StringLiteral(parts[1]))
+	default:
+		return nil, nil
+	}
 }

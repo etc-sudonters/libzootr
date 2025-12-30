@@ -4,6 +4,7 @@ DUMP_ZOOTR_FROM=""
 SPOILER_PATH=""
 DUMP_DIR=".data"
 LOG_DIR=".logs"
+LOGIC="glitchless"
 
 function stderr() {
     >&2 echo "${*}"
@@ -30,6 +31,10 @@ while [ "$#" -gt 0 ]; do
             shift
             DUMP_DIR="${1}"
         ;;
+        "-G" | "--glitched" )
+            shift
+            LOGIC="glitched"
+        ;;
         "--log-dir" )
             shift
             LOG_DIR="${1}"
@@ -52,7 +57,7 @@ stderr "launching libzootr tui"
 exec go run ./cmd/knowitall/ \
     -debug \
     -logdir "${LOG_DIR}" \
-    -world "${ZOOTR_DIR}/logic/glitchless" \
+    -world "${ZOOTR_DIR}/logic/${LOGIC}" \
     -data "${ZOOTR_DIR}/data" \
     -spoiler "${SPOILER_PATH}" \
     --

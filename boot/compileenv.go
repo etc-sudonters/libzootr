@@ -190,6 +190,7 @@ func installCompilerFunctions(these *settings.Model) mido.ConfigureCompiler {
 		regionHasShortcuts := ConstCompileFunc(false)
 		hasTodAccess := ConstCompileFunc(true)
 		hadNightStart := ConstCompileFunc(these.Logic.Spawns.TimeOfDay.IsNight())
+		hasSoul := ConstCompileFunc(true)
 
 		mido.WithCompilerFunctions(func(*mido.CompileEnv) optimizer.CompilerFunctionTable {
 			return optimizer.CompilerFunctionTable{
@@ -202,6 +203,7 @@ func installCompilerFunctions(these *settings.Model) mido.ConfigureCompiler {
 				"at_day":                 hasTodAccess,
 				"at_night":               hasTodAccess,
 				"is_trial_skipped":       isTrialSkipped,
+				"has_soul":               hasSoul,
 			}
 		})(env)
 	}
