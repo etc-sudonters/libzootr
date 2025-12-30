@@ -29,7 +29,7 @@ func createGeneration(ctx context.Context, std *dontio.Std, opts *cliOptions) (m
 		Spoiler:    opts.spoiler,
 	}
 	these := settings.Default()
-	these.Seed = 0x76E76E14E9691280
+	these.Seed = opts.seed
 	these.Logic.Spawns.StartAge = settings.StartAgeChild
 	these.Logic.Connections.Flags |= settings.ConnectionOpenDoorOfTime
 

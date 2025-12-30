@@ -96,6 +96,7 @@ type cliOptions struct {
 	worldDir string
 	dataDir  string
 	spoiler  string
+	seed     uint64
 }
 
 func (opts *cliOptions) init(cliargs []string, flags *flag.FlagSet) error {
@@ -136,14 +137,20 @@ func (this *clivar) add(opts *cliOptions, flags *flag.FlagSet) {
 		ptr := this.ptr(opts).(*bool)
 		flags.BoolVar(ptr, this.name, defaultValue, this.description)
 		break
+	case uint64:
+		ptr := this.ptr(opts).(*uint64)
+		flags.Uint64Var(ptr, this.name, defaultValue, this.description)
 	default:
 		panic(slipup.Createf("unknown cli type: %t", defaultValue))
 	}
 }
 
+const defaultSeed uint64 = 0x76E76E14E9691280
+
 var clivars = map[string]clivar{
-	"d": {"d", "Directory where data files are stored", "", func(opts *cliOptions) any { return &opts.dataDir }},
-	"l": {"l", "Directory open log files in", ".logs", func(opts *cliOptions) any { return &opts.logDir }},
-	"s": {"s", "Path to spoiler log to import", "", func(opts *cliOptions) any { return &opts.spoiler }},
-	"w": {"w", "Directory where logic files are located", "", func(opts *cliOptions) any { return &opts.worldDir }},
+	"data":    {"data", "Directory where data files are stored", "", func(opts *cliOptions) any { return &opts.dataDir }},
+	"logdir":  {"logdir", "Directory open log files in", ".logs", func(opts *cliOptions) any { return &opts.logDir }},
+	"spoiler": {"spoiler", "Path to spoiler log to import", "", func(opts *cliOptions) any { return &opts.spoiler }},
+	"world":   {"world", "Directory where logic files are located", "", func(opts *cliOptions) any { return &opts.worldDir }},
+	"seed":    {"seed", "Seed for generation", defaultSeed, func(opts *cliOptions) any { return &opts.seed }},
 }
