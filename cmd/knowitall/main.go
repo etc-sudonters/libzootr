@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -36,18 +37,18 @@ func main() {
 	}()
 
 	ctx := context.Background()
-	if argsErr := (&opts).init(); argsErr != nil {
+	args := os.Args[1:]
+	flags := flag.CommandLine
+	if argsErr := (&opts).init(args, flags); argsErr != nil {
 		appExitCode = 2
 		realStd.WriteLineErr(argsErr.Error())
 		return
 	}
 	appStd := dontio.Std{}
 	cleanup, err := redirectAppStd(&appStd, &opts)
-	if cleanup != nil {
-		defer cleanup()
-	}
+	defer cleanup()
 	if err != nil {
-		fmt.Fprintf(realStd.Err, "Failed to redirect application std{in,out,err}\n%v\n", err)
+		realStd.WriteLineErr("Failed to redirect application std{in,out,err}\n%v", err)
 		appExitCode = 3
 		return
 	}
@@ -60,17 +61,19 @@ func main() {
 	return
 }
 
+func noop() {}
+
 func redirectAppStd(std *dontio.Std, opts *cliOptions) (func(), error) {
 	if !filepath.IsAbs(opts.logDir) {
 		path, pathErr := filepath.Abs(opts.logDir)
 		if pathErr != nil {
-			return nil, slipup.Describef(pathErr, "failed to initialize log dir %q", path)
+			return noop, slipup.Describef(pathErr, "failed to initialize log dir %q", path)
 		}
 		opts.logDir = path
 	}
 	logDirErr := os.Mkdir(opts.logDir, 0777)
 	if logDirErr != nil && !os.IsExist(logDirErr) {
-		return nil, slipup.Describef(logDirErr, "failed to initialize log dir %q", opts.logDir)
+		return noop, slipup.Describef(logDirErr, "failed to initialize log dir %q", opts.logDir)
 	}
 
 	std.In = dontio.AlwaysErrReader{io.ErrUnexpectedEOF}
@@ -80,7 +83,12 @@ func redirectAppStd(std *dontio.Std, opts *cliOptions) (func(), error) {
 type missingRequired string // option name
 
 func (arg missingRequired) Error() string {
-	return fmt.Sprintf("%s is required", string(arg))
+	clivar, ok := clivars[string(arg)]
+	if !ok {
+		panic(slipup.Createf("unknown cliflag %s", string(arg)))
+	}
+	description := clivar.description
+	return fmt.Sprintf("-%s is required: %s", string(arg), description)
 }
 
 type cliOptions struct {
@@ -90,22 +98,52 @@ type cliOptions struct {
 	spoiler  string
 }
 
-func (opts *cliOptions) init() error {
-	flag.StringVar(&opts.logDir, "l", ".logs", "Directory open log files in")
-	flag.StringVar(&opts.worldDir, "w", "", "Directory where logic files are located")
-	flag.StringVar(&opts.dataDir, "d", "", "Directory where data files are stored")
-	flag.StringVar(&opts.spoiler, "s", "", "Path to spoiler log to import")
-	flag.Parse()
+func (opts *cliOptions) init(cliargs []string, flags *flag.FlagSet) error {
+	for _, clivar := range clivars {
+		clivar.add(opts, flags)
+	}
+
+	err := flags.Parse(cliargs)
+
 	if opts.worldDir == "" {
-		return missingRequired("-w")
+		err = errors.Join(err, missingRequired("w"))
 	}
 
 	if opts.dataDir == "" {
-		return missingRequired("-d")
+		err = errors.Join(err, missingRequired("d"))
 	}
 
 	if opts.spoiler == "" {
-		return missingRequired("-s")
+		err = errors.Join(err, missingRequired("s"))
 	}
-	return nil
+
+	return err
+}
+
+type clivar struct {
+	name, description string
+	defaultValue      any
+	ptr               func(*cliOptions) any
+}
+
+func (this *clivar) add(opts *cliOptions, flags *flag.FlagSet) {
+	switch defaultValue := this.defaultValue.(type) {
+	case string:
+		ptr := this.ptr(opts).(*string)
+		flags.StringVar(ptr, this.name, defaultValue, this.description)
+		break
+	case bool:
+		ptr := this.ptr(opts).(*bool)
+		flags.BoolVar(ptr, this.name, defaultValue, this.description)
+		break
+	default:
+		panic(slipup.Createf("unknown cli type: %t", defaultValue))
+	}
+}
+
+var clivars = map[string]clivar{
+	"d": {"d", "Directory where data files are stored", "", func(opts *cliOptions) any { return &opts.dataDir }},
+	"l": {"l", "Directory open log files in", ".logs", func(opts *cliOptions) any { return &opts.logDir }},
+	"s": {"s", "Path to spoiler log to import", "", func(opts *cliOptions) any { return &opts.spoiler }},
+	"w": {"w", "Directory where logic files are located", "", func(opts *cliOptions) any { return &opts.worldDir }},
 }
