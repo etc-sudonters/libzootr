@@ -20,7 +20,7 @@ import (
 	"github.com/etc-sudonters/substrate/stageleft"
 )
 
-func createGeneraion(ctx context.Context, std *dontio.Std, opts *cliOptions) (magicbean.Generation, error) {
+func createGeneration(ctx context.Context, std *dontio.Std, opts *cliOptions) (magicbean.Generation, error) {
 	paths := boot.LoadPaths{
 		Tokens:     filepath.Join(opts.dataDir, "items.json"),
 		Placements: filepath.Join(opts.dataDir, "locations.json"),
@@ -45,7 +45,7 @@ func createGeneraion(ctx context.Context, std *dontio.Std, opts *cliOptions) (ma
 }
 
 func runMain(ctx context.Context, std *dontio.Std, opts *cliOptions) error {
-	gen, genErr := createGeneraion(ctx, std, opts)
+	gen, genErr := createGeneration(ctx, std, opts)
 	if genErr != nil {
 		return stageleft.AttachExitCode(slipup.Describe(genErr, "failed to boot zootr engine"), 101)
 	}
