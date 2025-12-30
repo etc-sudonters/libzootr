@@ -28,38 +28,38 @@ func (this Object) Is(mask bits) bool {
 }
 
 const (
-	STR_NULL  = "null"
-	STR_STR32 = "Str32"
-	STR_PTR32 = "Ptr32"
-	STR_BYTES = "Bytes"
-	STR_BOOL  = "Bool"
-	STR_F64   = "F64"
+	OBJ_NULL  = "null"
+	OBJ_STR   = "Str32"
+	OBJ_PTR   = "Ptr32"
+	OBJ_BYTES = "Bytes"
+	OBJ_BOOL  = "Bool"
+	OBJ_F64   = "F64"
 )
 
 func (this Object) Type() string {
 	field := bits(this)
 	if field == 0 {
-		return STR_NULL
+		return OBJ_NULL
 	}
 
 	if field&MASK_PTR32 == MASK_PTR32 {
-		return STR_PTR32
+		return OBJ_PTR
 	}
 
 	if field&MASK_STR32 == MASK_STR32 {
-		return STR_STR32
+		return OBJ_STR
 	}
 
 	if field&MASK_BYTES == MASK_BYTES {
-		return STR_BYTES
+		return OBJ_BYTES
 	}
 
 	if field&MASK_BOOL == MASK_BOOL {
-		return STR_BOOL
+		return OBJ_BOOL
 	}
 
 	if !math.IsNaN(math.Float64frombits(uint64(field))) {
-		return STR_F64
+		return OBJ_F64
 	}
 
 	panic("unrecognized type")

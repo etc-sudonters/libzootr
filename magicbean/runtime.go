@@ -2,6 +2,8 @@ package magicbean
 
 import (
 	"fmt"
+	"log/slog"
+	"strings"
 	"sudonters/libzootr/mido/objects"
 	"sudonters/libzootr/settings"
 	"sudonters/libzootr/zecs"
@@ -18,6 +20,7 @@ func ConstBool(b bool) objects.BuiltInFunction {
 }
 
 type BuiltIns struct {
+	CanLiveDamage     objects.BuiltInFunction `libzootr:"can_live_damage"`
 	CheckTodAccess    objects.BuiltInFunction `libzootr:"check_tod_access,params=1"`
 	Has               objects.BuiltInFunction `libzootr:"has,params=2"`
 	HasAnyOf          objects.BuiltInFunction `libzootr:"has_anyof,params=-1"`
@@ -35,6 +38,7 @@ type BuiltIns struct {
 
 func (this BuiltIns) Table() objects.BuiltInFunctions {
 	return objects.BuiltInFunctions{
+		this.CanLiveDamage,
 		this.CheckTodAccess,
 		this.Has,
 		this.HasAnyOf,
@@ -53,6 +57,7 @@ func (this BuiltIns) Table() objects.BuiltInFunctions {
 
 func CreateBuiltInDefs() []objects.BuiltInFunctionDef {
 	return []objects.BuiltInFunctionDef{
+		{Name: "can_live_dmg", Params: -1},
 		{Name: "check_tod_access", Params: 1},
 		{Name: "has", Params: 2},
 		{Name: "has_anyof", Params: -1},
@@ -134,5 +139,46 @@ func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, flags settings.Sh
 		}
 	} else {
 		builtins.HasNotesForSong = ConstBool(true)
+	}
+
+	builtins.CanLiveDamage = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
+		var numArgsErr error
+		args, numArgsErr = fixCanLiveDmgArgs(args)
+
+		if numArgsErr != nil {
+			return objects.Null, numArgsErr
+		}
+
+		if args[0].Type() != objects.OBJ_F64 || args[1].Type() != objects.OBJ_BOOL || args[2].Type() != objects.OBJ_BOOL {
+			types := &strings.Builder{}
+			for i := range args {
+				types.WriteString(args[i].Type())
+				if i != len(args) {
+					types.WriteRune(',')
+				}
+			}
+
+			return objects.Null, fmt.Errorf("can_live_dmg(f64, bool, bool) expected, have can_live_dmg(%s)", types.String())
+		}
+
+		slog.Error("unimplemented function called", "name", "can_live_dmg")
+		return objects.PackBool(true), nil
+	}
+}
+
+func fixCanLiveDmgArgs(passed []objects.Object) ([]objects.Object, error) {
+	switch len(passed) {
+	case 1:
+		slog.Warn("vararg func called", "name", "can_live_dmg")
+		return []objects.Object{passed[0], objects.PackBool(false), objects.PackBool(false)}, nil
+	case 2:
+		slog.Warn("vararg func called", "name", "can_live_dmg")
+		return []objects.Object{passed[0], passed[1], objects.PackBool(false)}, nil
+	case 3:
+		return passed, nil
+	default:
+		err := fmt.Errorf("can_live_dmg expects 3 arguments, got %d", len(passed))
+		slog.Error("argument mismatch", "err", err.Error())
+		return nil, err
 	}
 }

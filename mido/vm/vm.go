@@ -165,20 +165,20 @@ func Disassemble(bytecode compiler.Bytecode, objs *objects.Table) Disassembly {
 		}
 
 		switch c.Object.Type() {
-		case objects.STR_PTR32:
+		case objects.OBJ_PTR:
 			c.Value = objects.UnpackPtr32(c.Object)
 			c.Name = bytecode.Names[c.Index]
 			break
-		case objects.STR_STR32:
+		case objects.OBJ_STR:
 			c.Value = objs.DerefString(c.Object)
 			break
-		case objects.STR_BYTES:
+		case objects.OBJ_BYTES:
 			c.Value = objects.UnpackBytes(c.Object)
 			break
-		case objects.STR_BOOL:
+		case objects.OBJ_BOOL:
 			c.Value = objects.UnpackBool(c.Object)
 			break
-		case objects.STR_F64:
+		case objects.OBJ_F64:
 			c.Value = objects.UnpackF64(c.Object)
 			break
 
@@ -205,21 +205,21 @@ func (this Constant) String() string {
 	ty := obj.Type()
 	fmt.Fprintf(&view, "\ttype:\t%s\n", ty)
 	switch ty {
-	case objects.STR_PTR32:
+	case objects.OBJ_PTR:
 		ptr := this.Value.(objects.Ptr32)
 		fmt.Fprintf(&view, "\tname:\t%q\n", this.Name)
 		fmt.Fprintf(&view, "\ttag:\t%s\tptr:\t%04X\n", ptr.Tag, ptr.Addr)
 		break
-	case objects.STR_STR32:
+	case objects.OBJ_STR:
 		fmt.Fprintf(&view, "\tvalue:\t%q\n", this.Value.(string))
 		break
-	case objects.STR_BYTES:
+	case objects.OBJ_BYTES:
 		fmt.Fprintf(&view, "\tvalue:\t%v\n", this.Value.(objects.Bytes))
 		break
-	case objects.STR_BOOL:
+	case objects.OBJ_BOOL:
 		fmt.Fprintf(&view, "\tvalue:\t%t\n", this.Value.(bool))
 		break
-	case objects.STR_F64:
+	case objects.OBJ_F64:
 		fmt.Fprintf(&view, "\tvalue:\t%f\n", this.Value.(float64))
 		break
 	}
@@ -238,22 +238,22 @@ func (this *VM) Dis(w io.Writer, bytecode compiler.Bytecode) {
 			ty := obj.Type()
 			fmt.Fprintf(w, "\ttype:\t%s\n", ty)
 			switch ty {
-			case objects.STR_PTR32:
+			case objects.OBJ_PTR:
 				ptr := objects.UnpackPtr32(obj)
 				name := bytecode.Names[constant]
 				fmt.Fprintf(w, "\tname:\t%q\n", name)
 				fmt.Fprintf(w, "\ttag:\t%s\n\tptr:\t%04X\n", ptr.Tag, ptr.Addr)
 				break
-			case objects.STR_STR32:
+			case objects.OBJ_STR:
 				fmt.Fprintf(w, "\tvalue:\t%q\n", this.Objects.DerefString(obj))
 				break
-			case objects.STR_BYTES:
+			case objects.OBJ_BYTES:
 				fmt.Fprintf(w, "\tvalue:\t%v\n", objects.UnpackBytes(obj))
 				break
-			case objects.STR_BOOL:
+			case objects.OBJ_BOOL:
 				fmt.Fprintf(w, "\tvalue:\t%t\n", objects.UnpackBool(obj))
 				break
-			case objects.STR_F64:
+			case objects.OBJ_F64:
 				fmt.Fprintf(w, "\tvalue:\t%f\n", objects.UnpackF64(obj))
 				break
 			}

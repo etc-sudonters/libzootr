@@ -2,6 +2,7 @@ package boot
 
 import (
 	"fmt"
+	"log/slog"
 	"sudonters/libzootr/components"
 	"sudonters/libzootr/internal/query"
 	"sudonters/libzootr/internal/table"
@@ -76,17 +77,38 @@ func optimizeall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
 }
 
 func compileall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
+	eng := ocm.Engine()
 	uncompiled := ocm.Query()
 	uncompiled.Build(
 		zecs.Load[components.RuleOptimized],
-		zecs.With[components.Connection],
+		zecs.Load[components.Connection],
 		zecs.WithOut[components.RuleCompiled],
 	)
 
 	for ent, tup := range uncompiled.Rows {
 		entity := ocm.Proxy(ent)
 		compiling := tup.Values[0].(components.RuleOptimized)
+		edge := tup.Values[1].(components.Connection)
 
+		connFrom, connFromErr := eng.GetValues(
+			edge.From, table.ColumnIds{
+				query.MustAsColumnId[components.Name](eng),
+			},
+		)
+		if connFromErr != nil {
+			return fmt.Errorf("while looking for connection.From name: %w", connFromErr)
+		}
+
+		connTo, connToErr := eng.GetValues(
+			edge.To, table.ColumnIds{
+				query.MustAsColumnId[components.Name](eng),
+			},
+		)
+		if connToErr != nil {
+			return fmt.Errorf("while looking for connection.To name: %w", connToErr)
+		}
+
+		slog.Debug("compiling connection rule", "from", connFrom.Values[0], "to", connTo.Values[0])
 		bytecode, err := codegen.Compile(compiling.Node)
 		if err != nil {
 			return fmt.Errorf("while compiling/codegen: %w", err)
