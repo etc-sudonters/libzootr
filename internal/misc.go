@@ -1,14 +1,14 @@
 package internal
 
 import (
-	"github.com/etc-sudonters/substrate/mirrors"
-	"github.com/etc-sudonters/substrate/slipup"
 	"io/fs"
-	"muzzammil.xyz/jsonc"
 	"os"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/etc-sudonters/substrate/slipup"
+	"muzzammil.xyz/jsonc"
 )
 
 var idcharsonly = regexp.MustCompile("[^a-z0-9]+")
@@ -46,13 +46,13 @@ func ReadJsonFileAs[T any](path string) (T, error) {
 }
 
 func T[E any]() reflect.Type {
-	return mirrors.TypeOf[E]()
+	return reflect.TypeFor[E]()
 }
 
-func TypeAssert[T any](a any) (t T, err error) {
-	t, cast := a.(T)
+func TypeAssert[Ty any](a any) (t Ty, err error) {
+	t, cast := a.(Ty)
 	if !cast {
-		err = slipup.Createf("failed to cast %v to %s", a, mirrors.TypeOf[T]().Name())
+		err = slipup.Createf("failed to cast %v to %s", a, T[Ty]().Name())
 	}
 	err = nil
 	return

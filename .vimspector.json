@@ -1,4 +1,18 @@
 {
+    "adapters": {
+        "dlv-dap": {
+            "variables": {
+                "port": "${unusedLocalPort}"
+            },
+            "command": [
+                "$GOPATH/bin/dlv",
+                "dap",
+                "--listen",
+                "127.0.0.1:${port}"
+            ],
+            "port": "${port}"
+        }
+    },
     "configurations": {
         "zootler": {
             "adapter": "vscode-go",
@@ -16,13 +30,12 @@
             }
         },
         "test": {
-            "adapter": "vscode-go",
+            "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
-                "program": "${fileDirname}",
+                "program": "${fileDirname}/...",
                 "args": [],
-                "mode": "test",
-                "dlvToolPath": "$GOPATH/bin/dlv"
+                "mode": "test"
             }
         }
     }
