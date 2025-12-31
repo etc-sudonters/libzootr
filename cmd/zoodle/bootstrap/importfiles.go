@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sudonters/libzootr/importers"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/mido/optimizer"
@@ -30,10 +29,26 @@ type LoadPaths struct {
 	Relations                   DirPath
 }
 
-func (this LoadPaths) readscripts() map[string]string {
-	scripts, err := internal.ReadJsonFileStringMap(string(this.Scripts))
-	PanicWhenErr(err)
-	return scripts
+func (this LoadPaths) readscripts(ctx context.Context, fs fs.FS) iter.Seq2[importers.DumpedScript, error] {
+	return func(yield func(importers.DumpedScript, error) bool) {
+		fh, fhErr := fs.Open(this.Scripts)
+		defer func() {
+			if fh != nil {
+				fh.Close()
+			}
+		}()
+
+		if fhErr != nil {
+			yield(importers.DumpedScript{}, fhErr)
+			return
+		}
+
+		for script, err := range importers.DumpScripts.ImportFrom(ctx, fh) {
+			if !yield(script, err) || err != nil {
+				return
+			}
+		}
+	}
 }
 
 func (this LoadPaths) readtokens(ctx context.Context, fs fs.FS) iter.Seq2[importers.DumpedItem, error] {
@@ -121,10 +136,17 @@ func (this LoadPaths) readrelationsdir(ctx context.Context, fsys fs.FS, store fu
 	})
 }
 
-func storeScripts(ocm *zecs.Ocm, paths LoadPaths) error {
+func storeScripts(ctx context.Context, fs fs.FS, ocm *zecs.Ocm, paths LoadPaths) error {
 	eng := ocm.Engine()
-	for decl, source := range paths.readscripts() {
-		eng.InsertRow(magicbean.ScriptDecl(decl), magicbean.ScriptSource(source), name(optimizer.FastScriptNameFromDecl(decl)))
+	for script, err := range paths.readscripts(ctx, fs) {
+		if err != nil {
+			return err
+		}
+		eng.InsertRow(
+			magicbean.ScriptDecl(script.Decl),
+			magicbean.ScriptSource(script.Src),
+			name(optimizer.FastScriptNameFromDecl(script.Decl)),
+		)
 	}
 	return nil
 }
