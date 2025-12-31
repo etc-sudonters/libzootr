@@ -15,25 +15,24 @@
     },
     "configurations": {
         "zootler": {
-            "adapter": "vscode-go",
+            "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
-                "program": "${workspaceRoot}/cmd/zootler/",
+                "program": "${workspaceRoot}/cmd/zoodle",
                 "args": [
                     "-d",
                     "${workspaceRoot}/.data/data/",
                     "-l",
                     "${workspaceRoot}/.data/logic/glitchless"
                 ],
-                "mode": "debug",
-                "dlvToolPath": "$GOPATH/bin/dlv"
+                "mode": "debug"
             }
         },
         "test": {
             "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
-                "program": "${fileDirname}/...",
+                "program": "${workspaceRoot}/...",
                 "args": [],
                 "mode": "test"
             }

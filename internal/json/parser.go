@@ -5,6 +5,8 @@ import (
 	"io"
 	"strconv"
 	"sudonters/libzootr/internal"
+
+	"github.com/etc-sudonters/substrate/slipup"
 )
 
 type Reader interface {
@@ -110,6 +112,19 @@ func (this *Parser) Discard() error {
 }
 
 func (this *Parser) Next() bool {
+	defer func() {
+		if r := recover(); r != nil {
+			var panicwith error
+			switch r := r.(type) {
+			case error:
+				panicwith = this.makeError(r)
+			default:
+				panicwith = this.scanner.makePositionedError(slipup.Createf("%v", r))
+			}
+			panic(panicwith)
+		}
+	}()
+
 	if this.peek.Kind == EOF {
 		return false
 	}

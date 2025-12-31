@@ -207,9 +207,14 @@ func (this *Scanner) scanSpace(buffer []byte, _ bool, n *int) byte {
 func (this *Scanner) scanString(buffer []byte, atEof bool, n *int) ([]byte, error) {
 	startAt := *n
 
+	if startAt >= len(buffer) {
+		(*n)--
+		return nil, nil
+	}
+
 	if buffer[startAt] == '"' {
 		(*n)++
-		return nil, nil
+		return []byte{}, nil
 	}
 
 	size := len(buffer) - (*n)
@@ -353,7 +358,7 @@ func (this *Scanner) scanLiteral(buffer []byte, atEof bool, literal string, scan
 	bytes := []byte(literal)
 	size := len(bytes)
 	(*n)--
-	if size > len(buffer) {
+	if *n+size >= len(buffer) {
 		if atEof {
 			return nil, this.invalidToken(string(buffer))
 		}

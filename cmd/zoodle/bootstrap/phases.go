@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"context"
+	"io/fs"
 	"slices"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/magicbean"
@@ -25,9 +27,9 @@ func Phase1_InitializeStorage(ddl []zecs.DDL) zecs.Ocm {
 	return ocm
 }
 
-func Phase2_ImportFromFiles(ocm *zecs.Ocm, set *tracking.Set, paths LoadPaths) error {
+func Phase2_ImportFromFiles(ctx context.Context, fs fs.FS, ocm *zecs.Ocm, set *tracking.Set, paths LoadPaths) error {
 	PanicWhenErr(storeScripts(ocm, paths))
-	PanicWhenErr(storeTokens(set.Tokens, paths))
+	PanicWhenErr(storeTokens(ctx, fs, set.Tokens, paths))
 	PanicWhenErr(storePlacements(set.Nodes, set.Tokens, paths))
 	PanicWhenErr(storeRelations(set.Nodes, set.Tokens, paths))
 	return nil

@@ -61,12 +61,28 @@ func (this *DumpedItems) ImportFrom(ctx ctx, r io.Reader) iter.Seq2[DumpedItem, 
 
 func dumpOneItem(ctx ctx, obj *json.ObjectParser) (DumpedItem, error) {
 	var item DumpedItem
+	var property string
+
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			var panicwith error
+			switch recovered := recovered.(type) {
+			case error:
+				panicwith = slipup.Describef(recovered, "while handling item %#v last property %q", item, property)
+			default:
+				panicwith = slipup.Createf("while handling item: %#v last property %q: %v", item, property, recovered)
+			}
+			panic(panicwith)
+		}
+	}()
+
 	for obj.More() {
 		select {
 		case <-ctx.Done():
 			return item, ctx.Err()
 		default:
-			property, propertyErr := obj.ReadPropertyName()
+			var propertyErr error
+			property, propertyErr = obj.ReadPropertyName()
 			if propertyErr != nil {
 				return item, propertyErr
 			}
@@ -75,6 +91,9 @@ func dumpOneItem(ctx ctx, obj *json.ObjectParser) (DumpedItem, error) {
 			switch property {
 			case "name":
 				item.Name, readErr = obj.ReadString()
+				if item.Name == "Small Key (Ganons Castle)" {
+					break
+				}
 			case "type":
 				item.Type, readErr = obj.ReadString()
 			case "advancement":

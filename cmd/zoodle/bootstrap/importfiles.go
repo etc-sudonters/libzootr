@@ -1,11 +1,13 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
+	"iter"
 	"path/filepath"
-	"regexp"
 	"strings"
+	"sudonters/libzootr/importers"
 	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
@@ -33,10 +35,25 @@ func (this LoadPaths) readscripts() map[string]string {
 	return scripts
 }
 
-func (this LoadPaths) readtokens() []token {
-	tokens, err := internal.ReadJsonFileAs[[]token](string(this.Tokens))
-	PanicWhenErr(err)
-	return tokens
+func (this LoadPaths) readtokens(ctx context.Context, fs fs.FS) iter.Seq2[importers.DumpedItem, error] {
+	return func(yield func(importers.DumpedItem, error) bool) {
+		fh, fhErr := fs.Open(string(this.Tokens))
+		defer func() {
+			if fh != nil {
+				fh.Close()
+			}
+		}()
+		if fhErr != nil {
+			yield(importers.DumpedItem{}, fhErr)
+			return
+		}
+
+		for item, err := range importers.DumpItems.ImportFrom(ctx, fh) {
+			if !yield(item, err) || err != nil {
+				return
+			}
+		}
+	}
 }
 
 func (this LoadPaths) readplacements() []placement {
@@ -84,27 +101,30 @@ func storeScripts(ocm *zecs.Ocm, paths LoadPaths) error {
 	return nil
 }
 
-func storeTokens(tokens tracking.Tokens, paths LoadPaths) error {
-	for _, raw := range paths.readtokens() {
+func storeTokens(ctx context.Context, fs fs.FS, tokens tracking.Tokens, paths LoadPaths) error {
+	for item, decodeErr := range paths.readtokens(ctx, fs) {
+		if decodeErr != nil {
+			return decodeErr
+		}
 		var attachments zecs.Attaching
-		token := tokens.Named(name(raw.Name))
+		token := tokens.Named(name(item.Name))
 
-		if raw.Advancement {
+		if item.Advancement {
 			attachments.Add(magicbean.PriorityAdvancement)
-		} else if raw.Priority {
+		} else if item.Priority {
 			attachments.Add(magicbean.PriorityMajor)
-		} else if raw.Special != nil {
-			if _, exists := raw.Special["junk"]; exists {
+		} else if item.Special != nil {
+			if _, exists := item.Special["junk"]; exists {
 				attachments.Add(magicbean.PriorityJunk)
 			}
 		}
 
-		switch raw.Type {
+		switch item.Type {
 		case "BossKey", "bosskey":
-			attachments.Add(magicbean.BossKey{}, magicbean.ParseDungeonGroup(raw.Name))
+			attachments.Add(magicbean.BossKey{}, magicbean.ParseDungeonGroup(item.Name))
 			break
 		case "Compass", "compass":
-			attachments.Add(magicbean.Compass{}, magicbean.ParseDungeonGroup(raw.Name))
+			attachments.Add(magicbean.Compass{}, magicbean.ParseDungeonGroup(item.Name))
 			break
 		case "Drop", "drop":
 			attachments.Add(magicbean.Drop{})
@@ -122,7 +142,7 @@ func storeTokens(tokens tracking.Tokens, paths LoadPaths) error {
 			attachments.Add(magicbean.Item{})
 			break
 		case "Map", "map":
-			attachments.Add(magicbean.Map{}, magicbean.ParseDungeonGroup(raw.Name))
+			attachments.Add(magicbean.Map{}, magicbean.ParseDungeonGroup(item.Name))
 			break
 		case "Refill", "refill":
 			attachments.Add(magicbean.Refill{})
@@ -131,9 +151,9 @@ func storeTokens(tokens tracking.Tokens, paths LoadPaths) error {
 			attachments.Add(magicbean.Shop{})
 			break
 		case "SilverRupee", "silverrupee":
-			attachments.Add(magicbean.ParseSilverRupeePuzzle(raw.Name))
+			attachments.Add(magicbean.ParseSilverRupeePuzzle(item.Name))
 
-			if strings.Contains(raw.Name, "Pouch") {
+			if strings.Contains(item.Name, "Pouch") {
 				attachments.Add(magicbean.SilverRupeePouch{})
 			} else {
 				attachments.Add(magicbean.SilverRupee{})
@@ -142,15 +162,15 @@ func storeTokens(tokens tracking.Tokens, paths LoadPaths) error {
 		case "SmallKey", "smallkey",
 			"HideoutSmallKey", "hideoutsmallkey",
 			"TCGSmallKey", "tcgsmallkey":
-			attachments.Add(magicbean.SmallKey{}, magicbean.ParseDungeonGroup(raw.Name))
+			attachments.Add(magicbean.SmallKey{}, magicbean.ParseDungeonGroup(item.Name))
 			break
 		case "SmallKeyRing", "smallkeyring",
 			"HideoutSmallKeyRing", "hideoutsmallkeyring",
 			"TCGSmallKeyRing", "tcgsmallkeyring":
-			attachments.Add(magicbean.DungeonKeyRing{}, magicbean.ParseDungeonGroup(raw.Name))
+			attachments.Add(magicbean.DungeonKeyRing{}, magicbean.ParseDungeonGroup(item.Name))
 			break
 		case "Song", "song":
-			switch raw.Name {
+			switch item.Name {
 			case "Prelude of Light":
 				attachments.Add(magicbean.SONG_PRELUDE, magicbean.SongNotes("^>^><^"))
 			case "Bolero of Fire":
@@ -176,7 +196,7 @@ func storeTokens(tokens tracking.Tokens, paths LoadPaths) error {
 			case "Song of Storms":
 				attachments.Add(magicbean.SONG_STORMS, magicbean.SongNotes("Av^Av^"))
 			default:
-				panic(fmt.Errorf("unknown song %q", raw.Name))
+				panic(fmt.Errorf("unknown song %q", item.Name))
 			}
 			break
 		case "GoldSkulltulaToken", "goldskulltulatoken":
@@ -184,14 +204,16 @@ func storeTokens(tokens tracking.Tokens, paths LoadPaths) error {
 			break
 		}
 
-		if raw.Special != nil {
-			for name, special := range raw.Special {
+		if item.Special != nil {
+			for name, special := range item.Special {
 				// TODO turn this into more components
 				_, _ = name, special
 			}
 		}
 
-		PanicWhenErr(token.AttachFrom(attachments))
+		if err := token.AttachFrom(attachments); err != nil {
+			return slipup.Describef(err, "failed to create token %s", item.Name)
+		}
 	}
 	return nil
 }
@@ -298,6 +320,3 @@ type token struct {
 	Priority    bool                   `json:"priority"`
 	Special     map[string]interface{} `json:"special"`
 }
-
-var smallKeyGroup = regexp.MustCompile(`Small Key( Ring)? \((.*)\)`)
-var silverRupeeGroup = regexp.MustCompile(`Silver Rupee( Pouch)? \((.*)\)`)
