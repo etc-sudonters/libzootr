@@ -56,10 +56,25 @@ func (this LoadPaths) readtokens(ctx context.Context, fs fs.FS) iter.Seq2[import
 	}
 }
 
-func (this LoadPaths) readplacements() []placement {
-	regions, err := internal.ReadJsonFileAs[[]placement](string(this.Placements))
-	PanicWhenErr(err)
-	return regions
+func (this LoadPaths) readplacements(ctx context.Context, fs fs.FS) iter.Seq2[importers.DumpedLocation, error] {
+	return func(yield func(importers.DumpedLocation, error) bool) {
+		fh, fhErr := fs.Open(string(this.Placements))
+		defer func() {
+			if fh != nil {
+				fh.Close()
+			}
+		}()
+		if fhErr != nil {
+			yield(importers.DumpedLocation{}, fhErr)
+			return
+		}
+
+		for location, err := range importers.DumpLocations.ImportFrom(ctx, fh) {
+			if !yield(location, err) || err != nil {
+				return
+			}
+		}
+	}
 }
 
 func readrelations(path string) []relations {
@@ -218,11 +233,14 @@ func storeTokens(ctx context.Context, fs fs.FS, tokens tracking.Tokens, paths Lo
 	return nil
 }
 
-func storePlacements(nodes tracking.Nodes, tokens tracking.Tokens, paths LoadPaths) error {
-	for _, raw := range paths.readplacements() {
-		place := nodes.Placement(name(raw.Name))
-		if raw.Default != "" {
-			place.DefaultToken(tokens.Named(name(raw.Default)))
+func storePlacements(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens tracking.Tokens, paths LoadPaths) error {
+	for location, decodeErr := range paths.readplacements(ctx, fs) {
+		if decodeErr != nil {
+			return decodeErr
+		}
+		place := nodes.Placement(name(location.Name))
+		if location.Default != "" {
+			place.DefaultToken(tokens.Named(name(location.Default)))
 		}
 	}
 
