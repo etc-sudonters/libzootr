@@ -1,12 +1,19 @@
 package json
 
-import "iter"
+import (
+	"iter"
+	"sudonters/libzootr/internal"
+
+	"github.com/etc-sudonters/substrate/slipup"
+)
 
 type ReadsArray interface {
+	Current() Token
 	ReadArray() (*ArrayParser, error)
 }
 
 type ReadsObject interface {
+	Current() Token
 	ReadObject() (*ObjectParser, error)
 }
 
@@ -65,6 +72,18 @@ func ReadIntArray(this ReadsArray, err *error) iter.Seq2[int, int] {
 
 func ReadStringObject(this ReadsObject, err *error) iter.Seq2[string, string] {
 	return ReadObjectOf(this, (*ObjectParser).ReadString, err)
+}
+
+func ReadNullableStringObject(this ReadsObject, err *error) iter.Seq2[string, string] {
+	switch this.Current().Kind {
+	case NULL:
+		return internal.EmptySeq2[string, string]()
+	case OBJ_OPEN:
+		return ReadStringObject(this, err)
+	default:
+		*err = slipup.Createf("expected %s or %s but found %s", NULL, OBJ_OPEN, this.Current().Kind)
+		return internal.EmptySeq2[string, string]()
+	}
 }
 
 func ReadFloatObject(this ReadsObject, err *error) iter.Seq2[string, float64] {
@@ -141,6 +160,28 @@ func ReadStringArrayInto(r Reader, strs *[]string) (err error) {
 		*strs = append(*strs, str)
 	}
 	return
+}
+
+func ReadNullableString(r Reader) (string, error) {
+	switch r.Current().Kind {
+	case NULL:
+		return "", nil
+	case STRING:
+		return r.ReadString()
+	default:
+		return "", slipup.Createf("expected %s or %s but found %s", NULL, STRING, r.Current().Kind)
+	}
+}
+
+func ReadNullableBool(r Reader) (bool, error) {
+	switch r.Current().Kind {
+	case NULL:
+		return false, nil
+	case TRUE, FALSE:
+		return r.ReadBool()
+	default:
+		return false, slipup.Createf("expected %s, %s or %s but found %s", NULL, TRUE, FALSE, r.Current().Kind)
+	}
 }
 
 func ReduceStringArrayInto[T any](r Reader, seed T, reduce func(T, string) (T, error)) (T, error) {

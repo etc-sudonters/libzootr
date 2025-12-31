@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"iter"
 	"path/filepath"
@@ -77,13 +78,11 @@ func (this LoadPaths) readplacements(ctx context.Context, fs fs.FS) iter.Seq2[im
 	}
 }
 
-func readrelations(path string) []relations {
-	relations, err := internal.ReadJsonFileAs[[]relations](path)
-	PanicWhenErr(err)
-	return relations
+func readrelations(ctx context.Context, r io.Reader) iter.Seq2[importers.DumpedRelation, error] {
+	return importers.DumpRelations.ImportFrom(ctx, r)
 }
 
-func (this LoadPaths) readrelationsdir(store func(relations) error) error {
+func (this LoadPaths) readrelationsdir(ctx context.Context, fsys fs.FS, store func(importers.DumpedRelation) error) error {
 	return filepath.WalkDir(string(this.Relations), func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return slipup.Describe(err, "logic directory walk called with err")
@@ -100,10 +99,24 @@ func (this LoadPaths) readrelationsdir(store func(relations) error) error {
 			return nil
 		}
 
-		for _, relations := range readrelations(path) {
-			storeErr := store(relations)
-			PanicWhenErr(storeErr)
+		fh, fhErr := fsys.Open(path)
+		defer func() {
+			if fh != nil {
+				fh.Close()
+			}
+		}()
+		if fhErr != nil {
+			return fhErr
 		}
+		for relation, dumpErr := range importers.DumpRelations.ImportFrom(ctx, fh) {
+			if dumpErr != nil {
+				return dumpErr
+			}
+			if storeErr := store(relation); storeErr != nil {
+				return storeErr
+			}
+		}
+
 		return nil
 	})
 }
@@ -247,26 +260,26 @@ func storePlacements(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens
 	return nil
 }
 
-func storeRelations(nodes tracking.Nodes, tokens tracking.Tokens, paths LoadPaths) error {
-	return paths.readrelationsdir(func(raw relations) error {
-		region := nodes.Region(name(raw.RegionName))
+func storeRelations(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens tracking.Tokens, paths LoadPaths) error {
+	return paths.readrelationsdir(ctx, fs, func(relation importers.DumpedRelation) error {
+		region := nodes.Region(name(relation.RegionName))
 
-		for exit, rule := range raw.Exits {
+		for exit, rule := range relation.Exits {
 			transit := region.ConnectsTo(nodes.Region(name(exit)))
 			transit.Proxy.Attach(magicbean.RuleSource(rule), magicbean.EdgeTransit)
 		}
 
-		for location, rule := range raw.Locations {
-			placename := namef("%s %s", raw.RegionName, location)
+		for location, rule := range relation.Relations {
+			placename := namef("%s %s", relation.RegionName, location)
 			placement := nodes.Placement(placename)
 			edge := region.Has(placement)
 			edge.Attach(magicbean.RuleSource(rule))
 		}
 
-		for event, rule := range raw.Events {
+		for event, rule := range relation.Events {
 			token := tokens.Named(name(event))
 			token.Attach(magicbean.Event{})
-			placement := nodes.Placement(namef("%s %s", raw.RegionName, event))
+			placement := nodes.Placement(namef("%s %s", relation.RegionName, event))
 			placement.Fixed(token)
 			edge := region.Has(placement)
 			edge.Attach(magicbean.RuleSource(rule))
@@ -274,67 +287,38 @@ func storeRelations(nodes tracking.Nodes, tokens tracking.Tokens, paths LoadPath
 
 		var attachments zecs.Attaching
 
-		if raw.RegionName == "Root" {
+		if relation.RegionName == "Root" {
 			attachments.Add(magicbean.WorldGraphRoot{})
 		}
 
-		if raw.Hint != "" {
-			attachments.Add(magicbean.HintRegion(raw.Hint))
+		if relation.Hint != "" {
+			attachments.Add(magicbean.HintRegion(relation.Hint))
 		}
 
-		if raw.AltHint != "" {
-			attachments.Add(magicbean.AltHintRegion(raw.AltHint))
+		if relation.AltHint != "" {
+			attachments.Add(magicbean.AltHintRegion(relation.AltHint))
 		}
 
-		if raw.Dungeon != "" {
-			attachments.Add(magicbean.DungeonName(raw.Dungeon))
+		if relation.Dungeon != "" {
+			attachments.Add(magicbean.DungeonName(relation.Dungeon))
 		}
 
-		if raw.IsBossRoom {
+		if relation.IsBossRoom {
 			attachments.Add(magicbean.IsBossRoom{})
 		}
 
-		if raw.Savewarp != "" {
-			attachments.Add(magicbean.Savewarp(raw.Savewarp))
+		if relation.Savewarp != "" {
+			attachments.Add(magicbean.Savewarp(relation.Savewarp))
 		}
 
-		if raw.Scene != "" {
-			attachments.Add(magicbean.Scene(raw.Scene))
+		if relation.Scene != "" {
+			attachments.Add(magicbean.Scene(relation.Scene))
 		}
 
-		if raw.TimePasses {
+		if relation.TimePasses {
 			attachments.Add(magicbean.TimePassess{})
 		}
 
 		return region.AttachFrom(attachments)
 	})
-}
-
-type placement struct {
-	Categories []string `json:"categories"`
-	Name       string   `json:"name"`
-	Type       string   `json:"type"`
-	Default    string   `json:"vanilla"`
-}
-
-type relations struct {
-	Events     map[string]string `json:"events"`
-	Exits      map[string]string `json:"exits"`
-	Locations  map[string]string `json:"locations"`
-	RegionName string            `json:"region_name"`
-	AltHint    string            `json:"alt_hint"`
-	Hint       string            `json:"hint"`
-	Dungeon    string            `json:"dungeon"`
-	IsBossRoom bool              `json:"is_boss_room"`
-	Savewarp   string            `json:"savewarp"`
-	Scene      string            `json:"scene"`
-	TimePasses bool              `json:"time_passes"`
-}
-
-type token struct {
-	Name        string                 `json:"name"`
-	Type        string                 `json:"type"`
-	Advancement bool                   `json:"advancement"`
-	Priority    bool                   `json:"priority"`
-	Special     map[string]interface{} `json:"special"`
 }

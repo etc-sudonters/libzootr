@@ -24,7 +24,7 @@ type DumpedLocations struct{}
 // and the error will not be nil. Iteration may be canceled from the provided
 // context
 //
-//	func storeLocation(DumpedLocation)
+//	func storeLocation(importer.DumpedLocation)
 //
 //	for location, err := importers.DumpLocations.ImportFrom(ctx, locationReader) {
 //	    if err != nil {
@@ -112,6 +112,8 @@ func dumpOneLocation(ctx ctx, obj *json.ObjectParser) (DumpedLocation, error) {
 					obj.DiscardValue()
 				case json.STRING:
 					location.Default, readErr = obj.ReadString()
+				default:
+					readErr = slipup.Createf("vanilla must be a string, found: %v", obj.Current())
 				}
 			default:
 				readErr = slipup.Createf("unknown property %s", property)

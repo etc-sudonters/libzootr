@@ -25,7 +25,7 @@ type DumpedItems struct{}
 // error occurs. If an error occurs then an empty DumpedItem is yielded and the
 // error will not be nil. Iteration may be canceled from the provided context
 //
-//	func storeItem(DumpedItem)
+//	func storeItem(importer.DumpedItem)
 //
 //	for item, err := importers.DumpItems.ImportFrom(ctx, itemReader) {
 //	    if err != nil {

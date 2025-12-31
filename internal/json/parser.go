@@ -12,6 +12,7 @@ import (
 type Reader interface {
 	ReadsArray
 	ReadsObject
+	Current() Token
 	ReadString() (string, error)
 	ReadInt() (int, error)
 	ReadFloat() (float64, error)

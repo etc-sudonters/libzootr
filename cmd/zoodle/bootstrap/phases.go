@@ -31,7 +31,7 @@ func Phase2_ImportFromFiles(ctx context.Context, fs fs.FS, ocm *zecs.Ocm, set *t
 	PanicWhenErr(storeScripts(ocm, paths))
 	PanicWhenErr(storeTokens(ctx, fs, set.Tokens, paths))
 	PanicWhenErr(storePlacements(ctx, fs, set.Nodes, set.Tokens, paths))
-	PanicWhenErr(storeRelations(set.Nodes, set.Tokens, paths))
+	PanicWhenErr(storeRelations(ctx, fs, set.Nodes, set.Tokens, paths))
 	return nil
 }
 
