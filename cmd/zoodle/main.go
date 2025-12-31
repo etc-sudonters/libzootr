@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"runtime/debug"
 
@@ -45,7 +46,7 @@ func main() {
 		return
 	}
 
-	appExitCode = runMain(ctx, opts)
+	appExitCode = runMain(ctx, opts, &bfs)
 	return
 }
 
@@ -78,4 +79,12 @@ func (opts *cliOptions) init() error {
 	}
 
 	return nil
+}
+
+var bfs = BasicFS{}
+
+type BasicFS struct{}
+
+func (_ *BasicFS) Open(name string) (fs.File, error) {
+	return os.Open(name)
 }

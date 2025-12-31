@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io/fs"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ import (
 	"sudonters/libzootr/mido/objects"
 )
 
-func runMain(ctx context.Context, opts cliOptions) stageleft.ExitCode {
+func runMain(ctx context.Context, opts cliOptions, fs fs.FS) stageleft.ExitCode {
 	stopProfiling := profileto(opts.profile)
 	defer stopProfiling()
 
@@ -37,7 +38,7 @@ func runMain(ctx context.Context, opts cliOptions) stageleft.ExitCode {
 	theseSettings.Shuffling.OcarinaNotes = true
 	theseSettings.Spawns.StartingAge = settings.StartAgeAdult
 	theseSettings.Locations.OpenDoorOfTime = true
-	generation := setup(paths, &theseSettings)
+	generation := setup(ctx, fs, paths, &theseSettings)
 	generation.Settings = theseSettings
 	CollectStartingItems(&generation)
 	visited := bitset32.Bitset{}
@@ -55,10 +56,10 @@ func runMain(ctx context.Context, opts cliOptions) stageleft.ExitCode {
 	return stageleft.ExitCode(0)
 }
 
-func setup(paths bootstrap.LoadPaths, settings *settings.Zootr) (generation magicbean.Generation) {
+func setup(ctx context.Context, fs fs.FS, paths bootstrap.LoadPaths, settings *settings.Zootr) (generation magicbean.Generation) {
 	ocm := bootstrap.Phase1_InitializeStorage(nil)
 	trackSet := tracking.NewTrackingSet(&ocm)
-	bootstrap.PanicWhenErr(bootstrap.Phase2_ImportFromFiles(&ocm, &trackSet, paths))
+	bootstrap.PanicWhenErr(bootstrap.Phase2_ImportFromFiles(ctx, fs, &ocm, &trackSet, paths))
 
 	compileEnv := bootstrap.Phase3_ConfigureCompiler(&ocm, settings)
 
