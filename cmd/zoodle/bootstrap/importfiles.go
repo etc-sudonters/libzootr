@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"iter"
+	"log/slog"
 	"path/filepath"
 	"strings"
 	"sudonters/libzootr/importers"
@@ -114,6 +115,7 @@ func (this LoadPaths) readrelationsdir(ctx context.Context, fsys fs.FS, store fu
 			return nil
 		}
 
+		slog.WarnContext(ctx, "loading logic file", "path", path)
 		fh, fhErr := fsys.Open(path)
 		defer func() {
 			if fh != nil {

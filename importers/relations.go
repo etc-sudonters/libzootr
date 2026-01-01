@@ -10,17 +10,18 @@ import (
 )
 
 type DumpedRelation struct {
-	Events     map[string]string
-	Exits      map[string]string
-	Relations  map[string]string
-	RegionName string
-	AltHint    string
-	Hint       string
-	Dungeon    string
-	IsBossRoom bool
-	Savewarp   string
-	Scene      string
-	TimePasses bool
+	Events            map[string]string
+	Exits             map[string]string
+	Relations         map[string]string
+	RegionName        string
+	AltHint           string
+	Hint              string
+	Dungeon           string
+	IsBossRoom        bool
+	Savewarp          string
+	Scene             string
+	TimePasses        bool
+	ProvidesTimeOfDay string
 }
 
 var emptyRelation = DumpedRelation{}
@@ -124,6 +125,8 @@ func dumpOneRelation(ctx ctx, obj *json.ObjectParser) (DumpedRelation, error) {
 				relation.Scene, readErr = json.ReadNullableString(obj)
 			case "time_passes":
 				relation.TimePasses, readErr = json.ReadNullableBool(obj)
+			case "provides_time":
+				relation.ProvidesTimeOfDay, readErr = json.ReadNullableString(obj)
 			default:
 				readErr = slipup.Createf("unknown property %s", property)
 			}
