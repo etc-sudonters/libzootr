@@ -73,7 +73,7 @@ func Default() Zootr {
 	s.Shuffling.Tokens = ShuffleGoldTokenOff
 	s.Shuffling.WonderItems = false
 
-	s.Tricks.Enabled = map[string]bool{
+	s.Skills.Tricks = map[string]bool{
 		"fewer_tunic_requirements":    true,
 		"grottos_without_agony":       true,
 		"child_deadhand":              true,
@@ -94,7 +94,6 @@ func Default() Zootr {
 	s.Starting.Hearts = 3
 	s.Starting.RauruReward = true
 	s.Starting.Rupees = 0
-	s.Starting.Scarecrow = false
 	s.Starting.TimeOfDay = StartingTimeOfDayDefault
 	s.Starting.Tokens = []string{
 		"Deku Shield",
@@ -118,6 +117,7 @@ func Default() Zootr {
 	s.Trades.Child = ChildTradeStartMaskKeaton
 
 	s.ItemPool = ItemPoolDefault
+	s.ScarecrowBehavior = ScarecrowBehaviorDefault
 
 	return s
 }

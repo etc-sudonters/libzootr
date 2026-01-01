@@ -22,7 +22,7 @@ type Zootr struct {
 	Entrances       EntranceRandomizer
 	Spawns          SpawnSettings
 	Shuffling       Shuffling
-	Tricks          Tricks
+	Skills          Skills
 	Starting        Starting
 	Skips           Skips
 	Minigames       Minigames
@@ -41,8 +41,10 @@ type Zootr struct {
 	UsefulCutscenes      bool
 	FastChests           bool
 	NoCollectibleHearts  bool
+	ScarecrowBehavior    ScarecrowBehavior
 }
 
+type ScarecrowBehavior uint8
 type LogicRuleSet uint8
 type Medallions uint8
 
@@ -110,15 +112,15 @@ type Starting struct {
 	Hearts            uint8
 	RauruReward       bool
 	Rupees            uint16
-	Scarecrow         bool
 	TimeOfDay         StartingTimeOfDay
 	Tokens            []string // ootr uses equip, song and inventory separately
 	WithConsumables   bool
 	CompleteMaskQuest bool
 }
 
-type Tricks struct {
-	Enabled map[string]bool
+type Skills struct {
+	Tricks   map[string]bool
+	Glitches map[string]bool
 
 	ShadowFireArrowEntry uint8
 }

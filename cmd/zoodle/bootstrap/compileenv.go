@@ -143,11 +143,21 @@ func installCompilerFunctions(these *settings.Zootr) mido.ConfigureCompiler {
 
 	return func(env *mido.CompileEnv) {
 		hasNotesForSong := env.Symbols.Declare("has_notes_for_song", symbols.BUILT_IN_FUNCTION)
+		needsHeartForDamageMult := env.Symbols.Declare("needs_hearts_for_damage_multipler", symbols.BUILT_IN_FUNCTION)
 		checkTod := env.Symbols.Declare("check_tod", symbols.BUILT_IN_FUNCTION)
+		isGlitchEnabled := func(args []ast.Node, _ ast.Rewriting) (ast.Node, error) {
+			switch arg := args[0].(type) {
+			case ast.String:
+				return ast.Boolean(these.Skills.Glitches[string(arg)]), nil
+			default:
+				return nil, fmt.Errorf("is_glitch_enabled expects string as first argument got %#v", arg)
+			}
+		}
+
 		isTrickEnabled := func(args []ast.Node, _ ast.Rewriting) (ast.Node, error) {
 			switch arg := args[0].(type) {
 			case ast.String:
-				return ast.Boolean(these.Tricks.Enabled[string(arg)]), nil
+				return ast.Boolean(these.Skills.Tricks[string(arg)]), nil
 			default:
 				return nil, fmt.Errorf("is_trick_enabled expects string as first argument got %#v", arg)
 			}
@@ -162,6 +172,41 @@ func installCompilerFunctions(these *settings.Zootr) mido.ConfigureCompiler {
 				Target: ast.IdentifierFrom(hasNotesForSong),
 				Args:   args,
 			}, nil
+		}
+
+		canLiveDmg := func(args []ast.Node, rewriting ast.Rewriting) (ast.Node, error) {
+			invokes := make([]ast.Node, 3)
+			invokes[0] = ast.Invoke{
+				Target: ast.IdentifierFrom(needsHeartForDamageMult),
+				Args:   []ast.Node{args[0]},
+			}
+			invokes[1] = ast.Invoke{
+				Target: ast.IdentifierFrom(env.Symbols.LookUpByName("Fairy")),
+			}
+			invokes[2] = ast.Invoke{
+				Target: ast.IdentifierFrom(env.Symbols.LookUpByName("can_use")),
+				Args:   []ast.Node{ast.IdentifierFrom(env.Symbols.LookUpByName("Nayrus_Love"))},
+			}
+
+			switch len(args) {
+			case 3:
+				if !args[1].(ast.Boolean) {
+					invokes[1] = ast.Boolean(false)
+				}
+				if !args[2].(ast.Boolean) {
+					invokes[2] = ast.Boolean(false)
+				}
+			case 2:
+				if !args[1].(ast.Boolean) {
+					invokes[1] = ast.Boolean(false)
+				}
+			case 1:
+				break
+			default:
+				return nil, fmt.Errorf("can_live_dmg expects between 1 and 3 args, received %v", len(args))
+			}
+
+			return ast.AnyOf(invokes), nil
 		}
 
 		isTrialSkipped := func(args []ast.Node, _ ast.Rewriting) (ast.Node, error) {
@@ -197,6 +242,7 @@ func installCompilerFunctions(these *settings.Zootr) mido.ConfigureCompiler {
 		mido.WithCompilerFunctions(func(*mido.CompileEnv) optimizer.CompilerFunctionTable {
 			return optimizer.CompilerFunctionTable{
 				"region_has_shortcuts":   regionHasShortcuts,
+				"is_glitch_enabled":      isGlitchEnabled,
 				"is_trick_enabled":       isTrickEnabled,
 				"had_night_start":        hadNightStart,
 				"has_all_notes_for_song": hasAllNotesForSong,
@@ -204,6 +250,8 @@ func installCompilerFunctions(these *settings.Zootr) mido.ConfigureCompiler {
 				"at_day":                 needsTodChecks("day"),
 				"at_night":               needsTodChecks("night"),
 				"is_trial_skipped":       isTrialSkipped,
+				"has_soul":               ConstCompileFunc(true),
+				"can_live_dmg":           canLiveDmg,
 			}
 		})(env)
 	}

@@ -659,3 +659,22 @@ const (
 	ForestTempleAmyMeg                    = 1
 	ForestTempleJoBeth                    = 2
 )
+
+const (
+	ScarecrowBehaviorDefault ScarecrowBehavior = 0
+	ScarecrowBehaviorFast                      = 1
+	ScarecrowBehaviorFree                      = 2
+)
+
+func (this ScarecrowBehavior) String() string {
+	switch this {
+	case ScarecrowBehaviorDefault:
+		return "vanilla"
+	case ScarecrowBehaviorFast:
+		return "fast"
+	case ScarecrowBehaviorFree:
+		return "free"
+	default:
+		panic(slipup.Createf("unknown scarecrow behavior %x", uint(this)))
+	}
+}
