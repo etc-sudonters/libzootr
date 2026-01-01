@@ -30,7 +30,7 @@ func (this *VM) Execute(bytecode compiler.Bytecode) (obj objects.Object, err err
 			if thisErr, ok := r.(error); ok {
 				err = thisErr
 			} else if str, ok := r.(string); ok {
-				err = fmt.Errorf(str)
+				err = errors.New(str)
 			}
 
 			err = fmt.Errorf("PANIC!!!! %w\n%s", err, debug.Stack())

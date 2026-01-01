@@ -1,0 +1,22 @@
+name: Lint GitHub Actions workflows
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+concurrency:
+  group: branch-workflow-lint-${{ github.head_ref }}
+  cancel-in-progress: true
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+      - shell: bash
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@latest
+          actionlint -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}%0A```%0A{{replace $err.Snippet "\\n" "%0A"}}%0A```\n{{end}}' -ignore 'SC2016:'
