@@ -5,6 +5,9 @@ on:
       - opened
       - reopened
       - synchronize
+concurrency:
+  group: branch-test-${{ github.head_ref }}
+  cancel-in-progress: true
 jobs:
   build-test:
     runs-on: ubuntu-latest
