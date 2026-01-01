@@ -58,7 +58,7 @@ func main() {
 		return
 	}
 
-	logger, loggerErr := opts.logging.CreateLogger()
+	logger, loggerErr := opts.logging.CreateLogger(&appstd)
 	if loggerErr != nil {
 		appExitCode = 2
 		appstd.WriteLineErr("failed to configure logging: %s", loggerErr)

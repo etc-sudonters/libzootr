@@ -12,6 +12,7 @@ import (
 	"sudonters/libzootr/internal/files"
 	"time"
 
+	"github.com/etc-sudonters/substrate/dontio"
 	"github.com/etc-sudonters/substrate/slipup"
 )
 
@@ -45,14 +46,24 @@ func (this *LoggingConfig) AddFlags(flags *flag.FlagSet) {
 	flags.BoolVar(&this.Quiet, "very-very-quiet", false, "Disables logging entirely, highest priority")
 }
 
-func (this *LoggingConfig) CreateLogger() (*slog.Logger, error) {
-	if this.Quiet || this.PathPattern == "" || this.PathPattern == "/dev/null" {
+func (this *LoggingConfig) CreateLogger(appstd *dontio.Std) (*slog.Logger, error) {
+	stderrnames := map[string]bool{
+		"stderr":          true,
+		"-":               true,
+		"":                true,
+		"/dev/stderr":     true,
+		"/proc/self/fd/2": true,
+	}
+
+	if this.Quiet || this.PathPattern == "/dev/null" {
 		return slog.New(&DropHandler{}), nil
 	}
 
 	var sink io.Writer
 	var sinkErr error
-	if this.MaxBytes > 0 {
+	if _, isStdErr := stderrnames[this.PathPattern]; isStdErr {
+		sink = appstd.Err
+	} else if this.MaxBytes > 0 {
 		sink, sinkErr = newLogFileRotater(files.OsFS, this)
 	} else {
 		sink, sinkErr = files.OsFS.OpenFile(this.PathPattern, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
