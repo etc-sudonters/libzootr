@@ -2,58 +2,80 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
-	"io/fs"
+	"log/slog"
 	"os"
+	"os/signal"
 	"runtime/debug"
+	"runtime/pprof"
+	"sudonters/libzootr/cmd/cmdlib"
+	"sudonters/libzootr/internal/files"
 
 	"github.com/etc-sudonters/substrate/dontio"
 	"github.com/etc-sudonters/substrate/stageleft"
 )
 
 func main() {
-	var opts cliOptions
-	var appExitCode stageleft.ExitCode = stageleft.ExitSuccess
-	std := dontio.Std{
+	ctx, cancelApp := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	_ = cancelApp
+	appstd := dontio.Std{
 		In:  os.Stdin,
 		Out: os.Stdout,
 		Err: os.Stderr,
 	}
+	ctx = dontio.AddStdToContext(ctx, &appstd)
+	appExitCode := stageleft.ExitSuccess
+	opts := cliOptions{
+		logging: &cmdlib.LoggingConfig{},
+	}
+
 	defer func() {
 		os.Exit(int(appExitCode))
 	}()
 	defer func() {
 		if r := recover(); r != nil {
 			if err, ok := r.(error); ok {
-				std.WriteLineErr("%s", err)
+				appstd.WriteLineErr("%s", err)
 			} else if str, ok := r.(string); ok {
-				std.WriteLineErr("%s", str)
+				appstd.WriteLineErr("%s", str)
 			}
-			_, _ = std.Err.Write(debug.Stack())
+			_, _ = appstd.Err.Write(debug.Stack())
 			if appExitCode != stageleft.ExitSuccess {
 				appExitCode = stageleft.AsExitCode(r, stageleft.ExitCode(126))
 			}
 		}
 	}()
 
-	ctx := context.Background()
-	ctx = dontio.AddStdToContext(ctx, &std)
+	flags := flag.CommandLine
+	args := os.Args[1:]
+	fs := files.OsFS
 
-	if argsErr := (&opts).init(); argsErr != nil {
+	if argsErr := (&opts).init(flags, args); argsErr != nil {
 		appExitCode = 2
-		std.WriteLineErr(argsErr.Error())
+		appstd.WriteLineErr(argsErr.Error())
 		return
 	}
 
-	appExitCode = runMain(ctx, opts, &bfs)
+	logger, loggerErr := opts.logging.CreateLogger()
+	if loggerErr != nil {
+		appExitCode = 2
+		appstd.WriteLineErr("failed to configure logging: %s", loggerErr)
+		return
+	}
+	slog.SetDefault(logger)
+
+	stopProfiling := profileto(opts.profile)
+	defer stopProfiling()
+	appExitCode = runMain(ctx, appstd, opts, fs)
 	return
 }
 
 type missingRequired string // option name
 
 func (arg missingRequired) Error() string {
-	return fmt.Sprintf("%s is required", string(arg))
+	return fmt.Sprintf("-%s is required", string(arg))
 }
 
 type cliOptions struct {
@@ -61,30 +83,42 @@ type cliOptions struct {
 	dataDir   string
 	includeMq bool
 	profile   string
+	logging   *cmdlib.LoggingConfig
 }
 
-func (opts *cliOptions) init() error {
-	flag.StringVar(&opts.logicDir, "l", "", "Directory where logic files are located")
-	flag.StringVar(&opts.dataDir, "d", "", "Directory where data files are stored")
-	flag.StringVar(&opts.profile, "p", "", "profile file name")
-	flag.BoolVar(&opts.includeMq, "M", false, "Whether or not to include MQ data")
-	flag.Parse()
+func (opts *cliOptions) init(flags *flag.FlagSet, args []string) error {
+	flags.StringVar(&opts.logicDir, "l", "", "Directory where logic files are located")
+	flags.StringVar(&opts.dataDir, "d", "", "Directory where data files are stored")
+	flags.StringVar(&opts.profile, "p", "", "profile file name")
+	flags.BoolVar(&opts.includeMq, "M", false, "Whether or not to include MQ data")
+	opts.logging.AddFlags(flags)
+
+	flagErr := flags.Parse(args)
+	if flagErr != nil {
+		return flagErr
+	}
 
 	if opts.logicDir == "" {
-		return missingRequired("-l")
+		flagErr = errors.Join(flagErr, missingRequired("l"))
 	}
 
 	if opts.dataDir == "" {
-		return missingRequired("-d")
+		flagErr = errors.Join(flagErr, missingRequired("d"))
 	}
 
-	return nil
+	return flagErr
 }
 
-var bfs = BasicFS{}
+func noop() {}
 
-type BasicFS struct{}
-
-func (_ *BasicFS) Open(name string) (fs.File, error) {
-	return os.Open(name)
+func profileto(path string) func() {
+	if path == "" {
+		return noop
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	pprof.StartCPUProfile(f)
+	return func() { pprof.StopCPUProfile() }
 }

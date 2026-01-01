@@ -28,11 +28,20 @@
                 "mode": "debug"
             }
         },
-        "test": {
+        "test-here": {
             "adapter": "dlv-dap",
             "configuration": {
                 "request": "launch",
-                "program": "${workspaceRoot}/...",
+                "program": "${workspaceRoot}/${relativeFileDirname}",
+                "args": [],
+                "mode": "test"
+            }
+        },
+        "test-all": {
+            "adapter": "dlv-dap",
+            "configuration": {
+                "request": "launch",
+                "program": "${workspaceRoot}",
                 "args": [],
                 "mode": "test"
             }

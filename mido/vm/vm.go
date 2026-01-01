@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"runtime/debug"
 	"sudonters/libzootr/mido/code"
 	"sudonters/libzootr/mido/compiler"
@@ -133,11 +134,9 @@ loop:
 	return result, err
 }
 
-const warning dontio.ForegroundColor = 9
-
 func (this *VM) Truthy(obj objects.Object) bool {
 	if obj != objects.PackedTrue && obj != objects.PackedFalse {
-		fmt.Fprintf(this.Std.Err, warning.Paint("truthy checked non-boolean %q %X\n"), obj.Type(), obj)
+		slog.Warn("truthy checked non-boolean", "kind", obj.Type(), "obj", obj.String())
 	}
 
 	return obj.Truthy()
