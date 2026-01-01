@@ -2,6 +2,7 @@ package objects
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 )
 
@@ -35,6 +36,10 @@ const (
 	STR_BOOL  = "Bool"
 	STR_F64   = "F64"
 )
+
+func (this Object) String() string {
+	return fmt.Sprintf("%X", bits(this))
+}
 
 func (this Object) Type() string {
 	field := bits(this)

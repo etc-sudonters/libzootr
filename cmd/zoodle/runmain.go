@@ -4,9 +4,7 @@ import (
 	"context"
 	"io/fs"
 	"math/rand/v2"
-	"os"
 	"path/filepath"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/magicbean/tracking"
@@ -15,17 +13,13 @@ import (
 	"github.com/etc-sudonters/substrate/rng"
 	"github.com/etc-sudonters/substrate/stageleft"
 
-	"runtime/pprof"
 	"sudonters/libzootr/cmd/zoodle/bootstrap"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/objects"
 )
 
-func runMain(ctx context.Context, opts cliOptions, fs fs.FS) stageleft.ExitCode {
-	stopProfiling := profileto(opts.profile)
-	defer stopProfiling()
-
+func runMain(ctx context.Context, std dontio.Std, opts cliOptions, fs fs.FS) stageleft.ExitCode {
 	paths := bootstrap.LoadPaths{
 		Tokens:     filepath.Join(opts.dataDir, "items.json"),
 		Placements: filepath.Join(opts.dataDir, "locations.json"),
@@ -48,8 +42,6 @@ func runMain(ctx context.Context, opts cliOptions, fs fs.FS) stageleft.ExitCode 
 		Workset: &workset,
 	}
 	results := explore(ctx, &xplr, &generation, AgeAdult)
-	std, err := dontio.StdFromContext(ctx)
-	internal.PanicOnError(err)
 	std.WriteLineOut("Visited %d", visited.Len())
 	std.WriteLineOut("Reached %d", results.Reached.Len())
 	std.WriteLineOut("Pending %d", results.Pending.Len())
@@ -78,17 +70,4 @@ func setup(ctx context.Context, fs fs.FS, paths bootstrap.LoadPaths, settings *s
 	generation.Rng = *rand.New(rng.NewXoshiro256PPFromU64(settings.Seed))
 
 	return generation
-}
-
-func noop() {}
-
-func profileto(path string) func() {
-	if path == "" {
-		return noop
-	}
-
-	f, err := os.Create(path)
-	bootstrap.PanicWhenErr(err)
-	pprof.StartCPUProfile(f)
-	return func() { pprof.StopCPUProfile() }
 }
