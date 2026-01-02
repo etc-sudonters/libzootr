@@ -1,7 +1,6 @@
 package table
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 
@@ -11,10 +10,16 @@ import (
 var INVALID_ROWID RowId = math.MaxUint32
 var INVALID_COLUMNID ColumnId = math.MaxUint32
 
-type RowId uint32
-type ColumnId uint32
-type Value interface{}
+type ColumnMeta struct {
+	Id ColumnId
+	T  reflect.Type
+}
 
+type ColumnMetas []ColumnMeta
+type ColumnIds []ColumnId
+type Columns []ColumnData
+type ColumnMap map[reflect.Type]Value
+type ColumnId uint32
 type ColumnFactory func() Column
 
 // core column interface
@@ -47,52 +52,4 @@ func (c ColumnData) Type() reflect.Type {
 
 func (c ColumnData) Id() ColumnId {
 	return c.id
-}
-
-func BuildColumn(col Column, typ reflect.Type) *ColumnBuilder {
-	if col == nil {
-		panic("nil column")
-	}
-
-	if typ == nil {
-		panic("nil type information")
-	}
-
-	b := new(ColumnBuilder)
-	b.column = col
-	b.typ = typ
-	return b
-}
-
-func BuildColumnOf[T Value](col Column) *ColumnBuilder {
-	return BuildColumn(col, reflect.TypeFor[T]())
-}
-
-type DDL func() *ColumnBuilder
-
-type ColumnBuilder struct {
-	typ    reflect.Type
-	column Column
-	index  Index
-}
-
-func (c *ColumnBuilder) Index(i Index) *ColumnBuilder {
-	if c.index != nil {
-		// let me know when to support multiple indexes
-		panic(fmt.Errorf("column already indexed: %s", c.typ.Name()))
-	}
-	c.index = i
-	return c
-}
-
-func (c ColumnBuilder) Type() reflect.Type {
-	return c.typ
-}
-
-func (c ColumnBuilder) build(id ColumnId) ColumnData {
-	return ColumnData{
-		id:     id,
-		typ:    c.typ,
-		column: c.column,
-	}
 }

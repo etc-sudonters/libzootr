@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"sudonters/libzootr/internal/bundle"
 	"sudonters/libzootr/internal/table"
-	"sudonters/libzootr/internal/table/columns"
 
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
 
@@ -16,18 +15,7 @@ import (
 var _ Engine = (*engine)(nil)
 
 var ErrInvalidQuery = errors.New("query is not supported")
-var ErrColumnExists = errors.New("column exists already")
-var ErrColumnNotExist = errors.New("column does not exist")
 
-func errExists(t reflect.Type) error {
-	return fmt.Errorf("%w: %s", ErrColumnExists, t.Name())
-}
-
-func errNotExists(t reflect.Type) error {
-	return fmt.Errorf("%w: %s", ErrColumnNotExist, t.Name())
-}
-
-type columnIndex map[reflect.Type]table.ColumnId
 type Entry struct{}
 
 type Query interface {
@@ -88,8 +76,6 @@ func (p predicate) admit(row *bitset32.Bitset) bool {
 
 type Engine interface {
 	CreateQuery() Query
-	CreateColumn(c *table.ColumnBuilder) (table.ColumnId, error)
-	CreateColumnIfNotExists(c *table.ColumnBuilder) (table.ColumnId, error)
 	InsertRow(vs ...table.Value) (table.RowId, error)
 	Retrieve(b Query) (bundle.Interface, error)
 	GetValues(r table.RowId, cs table.ColumnIds) (table.ValueTuple, error)
@@ -119,30 +105,17 @@ func ExtractTable(e Engine) (*table.Table, error) {
 	return nil, errors.ErrUnsupported
 }
 
-func NewEngine() (*engine, error) {
-	eng := &engine{
-		columnIndex: columnIndex{nil: 0},
-		tbl:         table.New(),
-	}
-
-	if _, err := eng.CreateColumn(columns.BitColumnOf[Entry]()); err != nil {
-		return nil, err
-	}
-
-	return eng, nil
+func EngineFromTable(tbl *table.Table) Engine {
+	return &engine{tbl}
 }
 
 type engine struct {
-	columnIndex map[reflect.Type]table.ColumnId
-	tbl         *table.Table
+	tbl *table.Table
 }
 
 func (e *engine) ColumnIdFor(t reflect.Type) (table.ColumnId, bool) {
-	if id, ok := e.columnIndex[t]; ok {
-		return id, ok
-	}
-
-	return table.INVALID_COLUMNID, false
+	cid, err := e.tbl.ColumnIdFor(t)
+	return cid, err == nil
 }
 
 func (e engine) CreateQuery() Query {
@@ -153,29 +126,6 @@ func (e engine) CreateQuery() Query {
 		notExists: &bitset32.Bitset{},
 		optional:  &bitset32.Bitset{},
 	}
-}
-
-func (e *engine) CreateColumn(c *table.ColumnBuilder) (table.ColumnId, error) {
-	if _, ok := e.columnIndex[c.Type()]; ok {
-		return 0, errExists(c.Type())
-	}
-
-	col, err := e.tbl.CreateColumn(c)
-	if err != nil {
-		return 0, err
-	}
-
-	e.columnIndex[col.Type()] = col.Id()
-	return col.Id(), nil
-}
-
-func (e *engine) CreateColumnIfNotExists(c *table.ColumnBuilder) (table.ColumnId, error) {
-	id, ok := e.columnIndex[c.Type()]
-	if ok {
-		return id, nil
-	}
-
-	return e.CreateColumn(c)
 }
 
 func (e *engine) InsertRow(vs ...table.Value) (table.RowId, error) {
@@ -224,7 +174,8 @@ func (e *engine) SetValues(r table.RowId, vs table.Values) error {
 			panic("cannot insert nil value")
 		}
 
-		id, err := e.intoColId(v)
+		vty := reflect.TypeOf(v)
+		id, err := e.tbl.ColumnIdFor(vty)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -268,14 +219,4 @@ func (e *engine) UnsetValues(r table.RowId, cs table.ColumnIds) error {
 	}
 
 	return nil
-}
-
-func (e *engine) intoColId(v table.Value) (table.ColumnId, error) {
-	typ := reflect.TypeOf(v)
-	id, ok := e.columnIndex[typ]
-	if !ok {
-		return 0, errNotExists(typ)
-	}
-
-	return id, nil
 }

@@ -1,83 +1,23 @@
 package table
 
 import (
-	"errors"
-	"fmt"
 	"reflect"
 
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
-
-	"github.com/etc-sudonters/substrate/mirrors"
 )
 
-type ColumnMeta struct {
-	Id ColumnId
-	T  reflect.Type
-}
-type ColumnMetas []ColumnMeta
-type ColumnIds []ColumnId
-type Columns []ColumnData
 type Values []Value
+type Value interface{}
+
+type RowId uint32
 type Row = bitset32.Bitset
 type Rows []*Row
-type ColumnMap map[reflect.Type]Value
-type RowTuple struct {
-	Id RowId
-	ValueTuple
-}
 
-func (vt *ValueTuple) Init(cs Columns) {
-	vt.Cols = make(ColumnMetas, len(cs))
-	vt.Values = make(Values, len(cs))
-	for i, c := range cs {
-		vt.Cols[i].Id = c.Id()
-		vt.Cols[i].T = c.Type()
-	}
-}
-
-func (vt *ValueTuple) Load(r RowId, cs Columns) {
-	for i, c := range cs {
-		vt.Values[i] = c.Column().Get(r)
-	}
-}
-
-var ErrColumnNotPresent = errors.New("column not present")
-var ErrCouldNotCastColumn = errors.New("could not cast column")
-
-func Extract[T any](cm ColumnMap) (*T, error) {
-	typ := reflect.TypeFor[T]()
-	item, exists := cm[typ]
-	if !exists {
-		return nil, fmt.Errorf("%w: '%s'", ErrColumnNotPresent, typ.Name())
-	}
-	t, casted := item.(T)
-	if !casted {
-		return nil, fmt.Errorf("%w: '%s'", ErrCouldNotCastColumn, typ.Name())
-	}
-	return &t, nil
-}
-
-type ValueTuple struct {
-	Cols   ColumnMetas
-	Values Values
-}
-
-func FromColumnMap[T any](cm ColumnMap) (T, bool) {
-	t, exists := cm[reflect.TypeFor[T]()]
-	if !exists {
-		return mirrors.Empty[T](), false
-	}
-	return t.(T), true
-}
-
-func (v *ValueTuple) ColumnMap() ColumnMap {
-	m := make(ColumnMap, len(v.Values))
-
-	for i := range v.Cols {
-		m[v.Cols[i].T] = v.Values[i]
-	}
-
-	return m
+type Table struct {
+	Cols    []ColumnData
+	Rows    Rows
+	indexes map[ColumnId]Index
+	coltyp  map[reflect.Type]ColumnId
 }
 
 func New() *Table {
@@ -85,13 +25,8 @@ func New() *Table {
 		Cols:    make([]ColumnData, 0),
 		Rows:    make(Rows, 0),
 		indexes: make(map[ColumnId]Index, 0),
+		coltyp:  make(map[reflect.Type]ColumnId, 0),
 	}
-}
-
-type Table struct {
-	Cols    []ColumnData
-	Rows    Rows
-	indexes map[ColumnId]Index
 }
 
 func (tbl *Table) Lookup(c ColumnId, v Value) bitset32.Bitset {
@@ -99,16 +34,6 @@ func (tbl *Table) Lookup(c ColumnId, v Value) bitset32.Bitset {
 		return idx.Rows(v)
 	}
 	return tbl.Cols[c].column.ScanFor(v)
-}
-
-func (tbl *Table) CreateColumn(b *ColumnBuilder) (ColumnData, error) {
-	id := ColumnId(len(tbl.Cols))
-	col := b.build(id)
-	tbl.Cols = append(tbl.Cols, col)
-	if b.index != nil {
-		tbl.indexes[id] = b.index
-	}
-	return col, nil
 }
 
 func (tbl *Table) InsertRow() RowId {
@@ -137,4 +62,16 @@ func (tbl *Table) UnsetValue(r RowId, c ColumnId) error {
 		idx.Unset(r)
 	}
 	return nil
+}
+
+func (tbl *Table) ColumnIdFor(ty reflect.Type) (ColumnId, error) {
+	cid, exists := tbl.coltyp[ty]
+	if !exists {
+		return INVALID_COLUMNID, ErrColumnNotExists(ty.Name())
+	}
+	return cid, nil
+}
+
+func ColumnIdFor[T any](tbl *Table) (ColumnId, error) {
+	return tbl.ColumnIdFor(reflect.TypeFor[T]())
 }

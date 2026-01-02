@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"slices"
 	"sudonters/libzootr/internal/settings"
+	"sudonters/libzootr/internal/table"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/mido"
@@ -21,9 +22,10 @@ func PanicWhenErr(err error) {
 }
 
 func Phase1_InitializeStorage(ddl []zecs.DDL) zecs.Ocm {
-	ocm, err := zecs.New()
-	PanicWhenErr(err)
-	PanicWhenErr(zecs.Apply(&ocm, staticddl()))
+	ddl = slices.Concat(ddl, staticddl())
+	tbl, tblErr := table.FromDDL(ddl...)
+	PanicWhenErr(tblErr)
+	ocm := zecs.New(tbl)
 	return ocm
 }
 

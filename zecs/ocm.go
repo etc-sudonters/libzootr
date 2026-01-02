@@ -14,19 +14,8 @@ type Value = table.Value
 type Values = table.Values
 type RowSet = bundle.Interface
 
-func New() (Ocm, error) {
-	eng, err := query.NewEngine()
-	return Ocm{eng}, err
-}
-
-func Apply(ocm *Ocm, ddl []DDL) error {
-	for i := range ddl {
-		if _, err := ocm.eng.CreateColumn(ddl[i]()); err != nil {
-			return err
-		}
-	}
-
-	return nil
+func New(tbl *table.Table) Ocm {
+	return Ocm{query.EngineFromTable(tbl)}
 }
 
 type Ocm struct {
