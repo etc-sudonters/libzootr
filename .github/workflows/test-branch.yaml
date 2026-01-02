@@ -19,7 +19,7 @@ jobs:
       - shell: bash
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest || exit 2
-          exec go vet ./... -c=5
+          exec go vet ./...
       - shell: bash
         if: ${{ !cancelled() }}
         run: exec staticcheck ./...
