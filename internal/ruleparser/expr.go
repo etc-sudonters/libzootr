@@ -2,6 +2,7 @@ package ruleparser
 
 import (
 	"math"
+	"reflect"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 	"github.com/etc-sudonters/substrate/slipup"
@@ -66,7 +67,9 @@ func AssertAs[T Tree](pt Tree) (T, error) {
 		return cast, nil
 	}
 
-	return mirrors.Empty[T](), slipup.Createf("could not cast %+v to %s", pt, mirrors.TypeOf[T]().Name())
+	typ := reflect.TypeFor[T]()
+
+	return mirrors.Empty[T](), slipup.Createf("could not cast %+v to %s", pt, typ.Name())
 }
 
 func MustAssertAs[T Tree](ast Tree) T {
@@ -84,7 +87,7 @@ func Unify[A Tree, B Tree, C any](pt Tree, a func(A) (C, error), b func(B) (C, e
 	case B:
 		return b(pt)
 	default:
-		return mirrors.Empty[C](), slipup.Createf("could not cast %+v to %s or %s", pt, mirrors.T[A]().Name(), mirrors.T[B]().Name())
+		return mirrors.Empty[C](), slipup.Createf("could not cast %+v to %s or %s", pt, reflect.TypeFor[A]().Name(), reflect.TypeFor[B]().Name())
 	}
 }
 

@@ -3,8 +3,9 @@ package table
 import (
 	"errors"
 	"fmt"
-	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
+
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 )
@@ -44,7 +45,7 @@ var ErrColumnNotPresent = errors.New("column not present")
 var ErrCouldNotCastColumn = errors.New("could not cast column")
 
 func Extract[T any](cm ColumnMap) (*T, error) {
-	typ := mirrors.TypeOf[T]()
+	typ := reflect.TypeFor[T]()
 	item, exists := cm[typ]
 	if !exists {
 		return nil, fmt.Errorf("%w: '%s'", ErrColumnNotPresent, typ.Name())
@@ -62,7 +63,7 @@ type ValueTuple struct {
 }
 
 func FromColumnMap[T any](cm ColumnMap) (T, bool) {
-	t, exists := cm[mirrors.T[T]()]
+	t, exists := cm[reflect.TypeFor[T]()]
 	if !exists {
 		return mirrors.Empty[T](), false
 	}

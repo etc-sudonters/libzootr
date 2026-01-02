@@ -3,13 +3,13 @@ package query
 import (
 	"errors"
 	"fmt"
-	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
 	"sudonters/libzootr/internal/bundle"
 	"sudonters/libzootr/internal/table"
 	"sudonters/libzootr/internal/table/columns"
 
-	"github.com/etc-sudonters/substrate/mirrors"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
+
 	"github.com/etc-sudonters/substrate/slipup"
 )
 
@@ -108,7 +108,7 @@ func MustColumnIdFor(typ reflect.Type, e Engine) table.ColumnId {
 }
 
 func MustAsColumnId[T any](e Engine) table.ColumnId {
-	return MustColumnIdFor(mirrors.TypeOf[T](), e)
+	return MustColumnIdFor(reflect.TypeFor[T](), e)
 }
 
 func ExtractTable(e Engine) (*table.Table, error) {

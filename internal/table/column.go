@@ -2,11 +2,10 @@ package table
 
 import (
 	"fmt"
-	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"math"
 	"reflect"
 
-	"github.com/etc-sudonters/substrate/mirrors"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 )
 
 var INVALID_ROWID RowId = math.MaxUint32
@@ -66,7 +65,7 @@ func BuildColumn(col Column, typ reflect.Type) *ColumnBuilder {
 }
 
 func BuildColumnOf[T Value](col Column) *ColumnBuilder {
-	return BuildColumn(col, mirrors.TypeOf[T]())
+	return BuildColumn(col, reflect.TypeFor[T]())
 }
 
 type DDL func() *ColumnBuilder
