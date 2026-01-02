@@ -30,6 +30,5 @@ func TypeAssert[Ty any](a any) (t Ty, err error) {
 	if !cast {
 		err = slipup.Createf("failed to cast %v to %s", a, T[Ty]().Name())
 	}
-	err = nil
 	return
 }

@@ -8,11 +8,11 @@ import (
 
 const (
 	Forest Medallions = 0b00000001
-	Fire              = 0b00000010
-	Water             = 0b00000100
-	Shadow            = 0b00001000
-	Spirit            = 0b00010000
-	Light             = 0b00100000
+	Fire   Medallions = 0b00000010
+	Water  Medallions = 0b00000100
+	Shadow Medallions = 0b00001000
+	Spirit Medallions = 0b00010000
+	Light  Medallions = 0b00100000
 )
 
 const (
@@ -49,25 +49,25 @@ func (this TrialsEnabled) Count() uint8 {
 
 const (
 	KeyRingsRandom        Keyrings = 0b1010101010101010
-	KeyRingsOff                    = 0b0000000000000000
-	KeyringFortress                = 0b0000000000000001
-	KeyringChestGame               = 0b0000000000000010
-	KeyringForest                  = 0b0000000000000100
-	KeyringFire                    = 0b0000000000001000
-	KeyringWater                   = 0b0000000000010000
-	KeyringShadow                  = 0b0000000000100000
-	KeyringSpirit                  = 0b0000000001000000
-	KeyringWell                    = 0b0000000010000000
-	KeyringTrainingGround          = 0b0000000100000000
-	KeyringGanonsCastle            = 0b0000001000000000
-	KeyRingsAll                    = 0b0000001111111111
-	KeyRingsGiveBossKey            = 0b0100000000000000
+	KeyRingsOff           Keyrings = 0b0000000000000000
+	KeyringFortress       Keyrings = 0b0000000000000001
+	KeyringChestGame      Keyrings = 0b0000000000000010
+	KeyringForest         Keyrings = 0b0000000000000100
+	KeyringFire           Keyrings = 0b0000000000001000
+	KeyringWater          Keyrings = 0b0000000000010000
+	KeyringShadow         Keyrings = 0b0000000000100000
+	KeyringSpirit         Keyrings = 0b0000000001000000
+	KeyringWell           Keyrings = 0b0000000010000000
+	KeyringTrainingGround Keyrings = 0b0000000100000000
+	KeyringGanonsCastle   Keyrings = 0b0000001000000000
+	KeyRingsAll           Keyrings = 0b0000001111111111
+	KeyRingsGiveBossKey   Keyrings = 0b0100000000000000
 )
 
 const (
 	LogicGlitchess LogicRuleSet = 2
-	LogicGlitched               = 4
-	LogicNone                   = 8
+	LogicGlitched  LogicRuleSet = 4
+	LogicNone      LogicRuleSet = 8
 )
 
 func (this LogicRuleSet) String() string {
@@ -85,8 +85,8 @@ func (this LogicRuleSet) String() string {
 
 const (
 	ReachableAll       ReachableLocations = 2
-	ReachableRequired                     = 4
-	ReachableGoalsOnly                    = 8
+	ReachableRequired  ReachableLocations = 4
+	ReachableGoalsOnly ReachableLocations = 8
 )
 
 func (this ReachableLocations) String() string {
@@ -186,29 +186,29 @@ func (this KeyShuffle) String() string {
 
 const (
 	SilverRupeesOff              SilverRupeePouches = 0b00000000000000000000000000000000
-	SilverRupeesAll                                 = 0b11111111111111111111111111111111
-	SilverRupeesRandom                              = 0b11100000000000000000000000000000
-	SilverRupeesDodongoCavern                       = 0b00000000000000000000000000000001
-	SilverRupeesIceCavernScythe                     = 0b00000000000000000000000000000010
-	SilverRupeesIceCavernPush                       = 0b00000000000000000000000000000100
-	SilverRupeesWellBasement                        = 0b00000000000000000000000000010000
-	SilverRupeesShadowShortcut                      = 0b00000000000000000000000000100000
-	SilverRupeesShadowBlades                        = 0b00000000000000000000000001000000
-	SilverRupeesShadowHugePit                       = 0b00000000000000000000000010000000
-	SilverRupeesShadowSpikes                        = 0b00000000000000000000000100000000
-	SilverRupeesTrainingSlopes                      = 0b00000000000000000000001000000000
-	SilverRupeesTrainingLava                        = 0b00000000000000000000010000000000
-	SilverRupeesTrainingWater                       = 0b00000000000000000000100000000000
-	SilverRupeesSpiritTorches                       = 0b00000000000000000001000000000000
-	SilverRupeesSpiritBoulders                      = 0b00000000000000000010000000000000
-	SilverRupeesSpiritSunBlock                      = 0b00000000000000000100000000000000
-	SilverRupeesSpiritAdultClimb                    = 0b00000000000000001000000000000000
-	SilverRupeesTowerForestTrial                    = 0b00000000000000010000000000000000
-	SilverRupeesTowerFireTrial                      = 0b00000000000000100000000000000000
-	SilverRupeesTowerWaterTrial                     = 0b00000000000001000000000000000000
-	SilverRupeesTowerShadowTrial                    = 0b00000000000010000000000000000000
-	SilverRupeesTowerSpiritTrial                    = 0b00000000000100000000000000000000
-	SilverRupeesTowerLightTrial                     = 0b00000000001000000000000000000000
+	SilverRupeesAll              SilverRupeePouches = 0b11111111111111111111111111111111
+	SilverRupeesRandom           SilverRupeePouches = 0b11100000000000000000000000000000
+	SilverRupeesDodongoCavern    SilverRupeePouches = 0b00000000000000000000000000000001
+	SilverRupeesIceCavernScythe  SilverRupeePouches = 0b00000000000000000000000000000010
+	SilverRupeesIceCavernPush    SilverRupeePouches = 0b00000000000000000000000000000100
+	SilverRupeesWellBasement     SilverRupeePouches = 0b00000000000000000000000000010000
+	SilverRupeesShadowShortcut   SilverRupeePouches = 0b00000000000000000000000000100000
+	SilverRupeesShadowBlades     SilverRupeePouches = 0b00000000000000000000000001000000
+	SilverRupeesShadowHugePit    SilverRupeePouches = 0b00000000000000000000000010000000
+	SilverRupeesShadowSpikes     SilverRupeePouches = 0b00000000000000000000000100000000
+	SilverRupeesTrainingSlopes   SilverRupeePouches = 0b00000000000000000000001000000000
+	SilverRupeesTrainingLava     SilverRupeePouches = 0b00000000000000000000010000000000
+	SilverRupeesTrainingWater    SilverRupeePouches = 0b00000000000000000000100000000000
+	SilverRupeesSpiritTorches    SilverRupeePouches = 0b00000000000000000001000000000000
+	SilverRupeesSpiritBoulders   SilverRupeePouches = 0b00000000000000000010000000000000
+	SilverRupeesSpiritSunBlock   SilverRupeePouches = 0b00000000000000000100000000000000
+	SilverRupeesSpiritAdultClimb SilverRupeePouches = 0b00000000000000001000000000000000
+	SilverRupeesTowerForestTrial SilverRupeePouches = 0b00000000000000010000000000000000
+	SilverRupeesTowerFireTrial   SilverRupeePouches = 0b00000000000000100000000000000000
+	SilverRupeesTowerWaterTrial  SilverRupeePouches = 0b00000000000001000000000000000000
+	SilverRupeesTowerShadowTrial SilverRupeePouches = 0b00000000000010000000000000000000
+	SilverRupeesTowerSpiritTrial SilverRupeePouches = 0b00000000000100000000000000000000
+	SilverRupeesTowerLightTrial  SilverRupeePouches = 0b00000000001000000000000000000000
 )
 
 const (
@@ -303,16 +303,16 @@ func (this GerudoFortress) String() string {
 
 const (
 	ShortcutsOff    DungeonShortcuts = 0b0000000000000000
-	ShortcutsAll                     = 0b0000000011111111
-	ShortcutsRandom                  = 0b1010101010101010
-	ShortcutsDeku                    = 0b0000000000000001
-	ShortcutsCavern                  = 0b0000000000000010
-	ShortcutsJabu                    = 0b0000000000000100
-	ShortcutsForest                  = 0b0000000000001000
-	ShortcutsFire                    = 0b0000000000010000
-	ShortcutsWater                   = 0b0000000000100000
-	ShortcutsShadow                  = 0b0000000001000000
-	ShortcutsSpirit                  = 0b0000000010000000
+	ShortcutsAll    DungeonShortcuts = 0b0000000011111111
+	ShortcutsRandom DungeonShortcuts = 0b1010101010101010
+	ShortcutsDeku   DungeonShortcuts = 0b0000000000000001
+	ShortcutsCavern DungeonShortcuts = 0b0000000000000010
+	ShortcutsJabu   DungeonShortcuts = 0b0000000000000100
+	ShortcutsForest DungeonShortcuts = 0b0000000000001000
+	ShortcutsFire   DungeonShortcuts = 0b0000000000010000
+	ShortcutsWater  DungeonShortcuts = 0b0000000000100000
+	ShortcutsShadow DungeonShortcuts = 0b0000000001000000
+	ShortcutsSpirit DungeonShortcuts = 0b0000000010000000
 )
 
 const (
@@ -324,64 +324,61 @@ const (
 const (
 	// mask for upper 4 bits
 	MasterQuestDungeonsNone     MasterQuestDungeons = 0b0000000000000000
-	MasterQuestDungeonsAll                          = 0b1000000000000000
-	MasterQuestDungeonsSpecific                     = 0b0100000000000000
-	MasterQuestDungeonsCount                        = 0b0010000000000000
-	MasterQuestDungeonsRandom                       = 0b0001000000000000
-	// Specific Dungeons
-	MasterQuestDekuTree       = 0b0000000000000001
-	MasterQuestDodongoCavern  = 0b0000000000000010
-	MasterQuestJabu           = 0b0000000000000100
-	MasterQuestForest         = 0b0000000000001000
-	MasterQuestFire           = 0b0000000000010000
-	MasterQuestWater          = 0b0000000000100000
-	MasterQuestShadow         = 0b0000000001000000
-	MasterQuestSpirit         = 0b0000000010000000
-	MasterQuestWell           = 0b0000000100000000
-	MasterQuestIceCavern      = 0b0000001000000000
-	MasterQuestTrainingGround = 0b0000010000000000
-	MasterQuestGanonsCastle   = 0b0000100000000000
+	MasterQuestDungeonsAll      MasterQuestDungeons = 0b1000000000000000
+	MasterQuestDungeonsSpecific MasterQuestDungeons = 0b0100000000000000
+	MasterQuestDungeonsCount    MasterQuestDungeons = 0b0010000000000000
+	MasterQuestDungeonsRandom   MasterQuestDungeons = 0b0001000000000000
+	MasterQuestDekuTree         MasterQuestDungeons = 0b0000000000000001
+	MasterQuestDodongoCavern    MasterQuestDungeons = 0b0000000000000010
+	MasterQuestJabu             MasterQuestDungeons = 0b0000000000000100
+	MasterQuestForest           MasterQuestDungeons = 0b0000000000001000
+	MasterQuestFire             MasterQuestDungeons = 0b0000000000010000
+	MasterQuestWater            MasterQuestDungeons = 0b0000000000100000
+	MasterQuestShadow           MasterQuestDungeons = 0b0000000001000000
+	MasterQuestSpirit           MasterQuestDungeons = 0b0000000010000000
+	MasterQuestWell             MasterQuestDungeons = 0b0000000100000000
+	MasterQuestIceCavern        MasterQuestDungeons = 0b0000001000000000
+	MasterQuestTrainingGround   MasterQuestDungeons = 0b0000010000000000
+	MasterQuestGanonsCastle     MasterQuestDungeons = 0b0000100000000000
 )
 
 const (
 	CompletedDungeonsNone     CompletedDungeons = 0b0000000000000000
-	CompletedDungeonsSpecific                   = 0b1000000000000000
-	CompletedDungeonsRewards                    = 0b0100000000000000
-	CompletedDungeonsCount                      = 0b0010000000000000
-
-	// specific dungeons
-	CompletedDekuTree      = 0b0000000000000001
-	CompletedDodongoCavern = 0b0000000000000010
-	CompletedJabu          = 0b0000000000000100
-	CompletedForest        = 0b0000000000001000
-	CompletedFire          = 0b0000000000010000
-	CompletedWater         = 0b0000000000100000
-	CompletedShadow        = 0b0000000001000000
-	CompletedSpirit        = 0b0000000010000000
+	CompletedDungeonsSpecific CompletedDungeons = 0b1000000000000000
+	CompletedDungeonsRewards  CompletedDungeons = 0b0100000000000000
+	CompletedDungeonsCount    CompletedDungeons = 0b0010000000000000
+	CompletedDekuTree         CompletedDungeons = 0b0000000000000001
+	CompletedDodongoCavern    CompletedDungeons = 0b0000000000000010
+	CompletedJabu             CompletedDungeons = 0b0000000000000100
+	CompletedForest           CompletedDungeons = 0b0000000000001000
+	CompletedFire             CompletedDungeons = 0b0000000000010000
+	CompletedWater            CompletedDungeons = 0b0000000000100000
+	CompletedShadow           CompletedDungeons = 0b0000000001000000
+	CompletedSpirit           CompletedDungeons = 0b0000000010000000
 )
 
 const (
 	InteriorShuffleOff    InteriorShuffle = 0
-	InteriorShuffleSimple                 = 2
-	InteriorShuffleAll                    = 4
+	InteriorShuffleSimple InteriorShuffle = 2
+	InteriorShuffleAll    InteriorShuffle = 4
 )
 
 const (
 	DungeonEntranceShuffleOff    DungeonEntranceShuffle = 0
-	DungeonEntranceShuffleSimple                        = 2
-	DungeonEntranceShuffleAll                           = 4
+	DungeonEntranceShuffleSimple DungeonEntranceShuffle = 2
+	DungeonEntranceShuffleAll    DungeonEntranceShuffle = 4
 )
 
 const (
 	BossShuffleOff    BossShuffle = 0
-	BossShuffleSimple             = 2
-	BossShuffleAll                = 4
+	BossShuffleSimple BossShuffle = 2
+	BossShuffleAll    BossShuffle = 4
 )
 
 const (
 	SpawnVanilla     Spawn = 0
-	RandomSpawn            = 0xF0F0F0F0F0F0F0F00000000000000000
-	SetSpawnLocation       = 0xFFFFFFFFFFFFFFFF0000000000000000
+	RandomSpawn      Spawn = 0xF0F0F0F0F0
+	SetSpawnLocation Spawn = 0x0F0F0F0F0F
 )
 
 const (
@@ -393,34 +390,34 @@ const (
 const (
 	// upper bits mask -- how are shops shuffled
 	ShuffleShopsOff           ShuffleShops = 0
-	ShuffleShopsSpecialRandom              = 0b01010101 << 8
-	ShuffleShopsSpecial0                   = 0b11000000 << 8
-	ShuffleShopsSpecial1                   = 0b10100000 << 8
-	ShuffleShopsSpecial2                   = 0b10010000 << 8
-	ShuffleShopsSpecial3                   = 0b10001000 << 8
-	ShuffleShopsSpecial4                   = 0b10000100 << 8
+	ShuffleShopsSpecialRandom ShuffleShops = 0b01010101 << 8
+	ShuffleShopsSpecial0      ShuffleShops = 0b11000000 << 8
+	ShuffleShopsSpecial1      ShuffleShops = 0b10100000 << 8
+	ShuffleShopsSpecial2      ShuffleShops = 0b10010000 << 8
+	ShuffleShopsSpecial3      ShuffleShops = 0b10001000 << 8
+	ShuffleShopsSpecial4      ShuffleShops = 0b10000100 << 8
 
 	// lower bit mask -- do we have shop price caps
 	ShuffleShopPricesRandom       ShuffleShops = 0b0000000001010101
-	ShuffleShopPricesStartWallet               = 0b0000000000000011
-	ShuffleShopPricesAdultWallet               = 0b0000000000000110
-	ShuffleShopPricesGiantWallet               = 0b0000000000001010
-	ShuffleShopPricesTycoonWallet              = 0b0000000000010010
-	ShuffleShopPricesAffordable                = 0b0000000000100010
+	ShuffleShopPricesStartWallet  ShuffleShops = 0b0000000000000011
+	ShuffleShopPricesAdultWallet  ShuffleShops = 0b0000000000000110
+	ShuffleShopPricesGiantWallet  ShuffleShops = 0b0000000000001010
+	ShuffleShopPricesTycoonWallet ShuffleShops = 0b0000000000010010
+	ShuffleShopPricesAffordable   ShuffleShops = 0b0000000000100010
 )
 
 const (
 	ShuffleGoldTokenOff       ShuffleTokens = 0
-	ShuffleGoldTokenDungeons                = 1
-	ShuffleGoldTokenOverworld               = 2
+	ShuffleGoldTokenDungeons  ShuffleTokens = 1
+	ShuffleGoldTokenOverworld ShuffleTokens = 2
 )
 
 const (
 	ShuffleScrubsOff         ShuffleScrubs = 0 // off off
-	ShuffleScrubsUpgradeOnly               = 1 // OOTR off
-	ShuffleScrubsAffordable                = 2
-	ShuffleScrubsExpensive                 = 3
-	ShuffleScrubsRandom                    = 4
+	ShuffleScrubsUpgradeOnly ShuffleScrubs = 1 // OOTR off
+	ShuffleScrubsAffordable  ShuffleScrubs = 2
+	ShuffleScrubsExpensive   ShuffleScrubs = 3
+	ShuffleScrubsRandom      ShuffleScrubs = 4
 )
 
 func (this ShuffleScrubs) String() string {
@@ -443,15 +440,15 @@ func (this ShuffleScrubs) String() string {
 
 const (
 	ShuffleFreestandingsOff       ShuffleFreestandings = 0
-	ShuffleFreestandingsDungeon                        = 1
-	ShuffleFreestandingsOverworld                      = 2
+	ShuffleFreestandingsDungeon   ShuffleFreestandings = 1
+	ShuffleFreestandingsOverworld ShuffleFreestandings = 2
 )
 
 const (
 	ShufflePotsOff       ShufflePots = 0
-	ShufflePotsAll                   = 1
-	ShufflePotsDungeons              = 2
-	ShufflePotsOverworld             = 4
+	ShufflePotsAll       ShufflePots = 1
+	ShufflePotsDungeons  ShufflePots = 2
+	ShufflePotsOverworld ShufflePots = 4
 )
 
 func (this ShufflePots) String() string {
@@ -471,9 +468,9 @@ func (this ShufflePots) String() string {
 
 const (
 	ShuffleCratesOff       ShuffleCrates = 0
-	ShuffleCratesAll                     = 1
-	ShuffleCratesDungeons                = 2
-	ShuffleCratesOverworld               = 4
+	ShuffleCratesAll       ShuffleCrates = 1
+	ShuffleCratesDungeons  ShuffleCrates = 2
+	ShuffleCratesOverworld ShuffleCrates = 4
 )
 
 func (this ShuffleCrates) String() string {
@@ -493,21 +490,21 @@ func (this ShuffleCrates) String() string {
 
 const (
 	ShuffleLoachRewardOff     ShuffleLoachReward = 0
-	ShuffleLoachRewardVanilla                    = 1
-	ShuffleLoachRewardEasy                       = 2
+	ShuffleLoachRewardVanilla ShuffleLoachReward = 1
+	ShuffleLoachRewardEasy    ShuffleLoachReward = 2
 )
 
 const (
 	ShuffleSongPatternsOff   ShuffleSongPatterns = 0
-	ShuffleSongPatternsFrogs                     = 1
-	ShuffleSongPatternsWarps                     = 2
+	ShuffleSongPatternsFrogs ShuffleSongPatterns = 1
+	ShuffleSongPatternsWarps ShuffleSongPatterns = 2
 )
 
 const (
 	HintsRevealedNever  HintsRevealed = 0
-	HintsRevealedMask                 = 1
-	HintsRevealedStone                = 2
-	HintsRevealedAlways               = 4
+	HintsRevealedMask   HintsRevealed = 1
+	HintsRevealedStone  HintsRevealed = 2
+	HintsRevealedAlways HintsRevealed = 4
 )
 
 func (this HintsRevealed) String() string {
@@ -528,10 +525,10 @@ func (this HintsRevealed) String() string {
 
 const (
 	DamageMultiplierHalf   DamageMultiplier = 0
-	DamageMultiplierNormal                  = 1
-	DamageMultiplierDouble                  = 2
-	DamageMultiplierQuad                    = 4
-	DamageMultiplierOhko                    = 8
+	DamageMultiplierNormal DamageMultiplier = 1
+	DamageMultiplierDouble DamageMultiplier = 2
+	DamageMultiplierQuad   DamageMultiplier = 4
+	DamageMultiplierOhko   DamageMultiplier = 8
 )
 
 func (m DamageMultiplier) String() string {
@@ -553,11 +550,11 @@ func (m DamageMultiplier) String() string {
 
 const (
 	BonkDamageNone   BonkDamage = 0
-	BonkDamageHalf              = 1
-	BonkDamageNormal            = 2
-	BonkDamageDouble            = 4
-	BonkDamageQuad              = 8
-	BonkDamageOhko              = 16
+	BonkDamageHalf   BonkDamage = 1
+	BonkDamageNormal BonkDamage = 2
+	BonkDamageDouble BonkDamage = 4
+	BonkDamageQuad   BonkDamage = 8
+	BonkDamageOhko   BonkDamage = 16
 )
 
 func (m BonkDamage) String() string {
@@ -622,48 +619,48 @@ const (
 
 const (
 	AdultTradeShuffle           ShuffleTradeAdult = 0b1000000000000000
-	AdultTradeShuffleDisabled                     = 0
-	AdultTradeShuffleRandom                       = 0b1111111111111111
-	AdultTradeStartPocketEgg                      = 0b0000000000000001
-	AdultTradeStartPocketCucco                    = 0b0000000000000010
-	AdultTradeStartCojiro                         = 0b0000000000000100
-	AdultTradeStartOddMushroom                    = 0b0000000000001000
-	AdultTradeStartOddPotion                      = 0b0000000000010000
-	AdultTradeStartPoachersSaw                    = 0b0000000000100000
-	AdultTradeStartBrokenSword                    = 0b0000000001000000
-	AdultTradeStartPrescription                   = 0b0000000010000000
-	AdultTradeStartEyeballFrog                    = 0b0000000100000000
-	AdultTradeStartEyedrops                       = 0b0000001000000000
-	AdultTradeStartClaimCheck                     = 0b0000010000000000
+	AdultTradeShuffleDisabled   ShuffleTradeAdult = 0
+	AdultTradeShuffleRandom     ShuffleTradeAdult = 0b1111111111111111
+	AdultTradeStartPocketEgg    ShuffleTradeAdult = 0b0000000000000001
+	AdultTradeStartPocketCucco  ShuffleTradeAdult = 0b0000000000000010
+	AdultTradeStartCojiro       ShuffleTradeAdult = 0b0000000000000100
+	AdultTradeStartOddMushroom  ShuffleTradeAdult = 0b0000000000001000
+	AdultTradeStartOddPotion    ShuffleTradeAdult = 0b0000000000010000
+	AdultTradeStartPoachersSaw  ShuffleTradeAdult = 0b0000000000100000
+	AdultTradeStartBrokenSword  ShuffleTradeAdult = 0b0000000001000000
+	AdultTradeStartPrescription ShuffleTradeAdult = 0b0000000010000000
+	AdultTradeStartEyeballFrog  ShuffleTradeAdult = 0b0000000100000000
+	AdultTradeStartEyedrops     ShuffleTradeAdult = 0b0000001000000000
+	AdultTradeStartClaimCheck   ShuffleTradeAdult = 0b0000010000000000
 )
 
 const (
 	ChildTradeShuffle  ShuffleTradeChild = 0b1000000000000000
-	ChildTradeComplete                   = 0b1111111111111111
+	ChildTradeComplete ShuffleTradeChild = 0b1111111111111111
 
-	ChildTradeStartWeirdEgg   = 0b0000000000000001
-	ChildTradeStartChicken    = 0b0000000000000010
-	ChildTradeStartLetter     = 0b0000000000000100
-	ChildTradeStartMaskKeaton = 0b0000000000001000
-	ChildTradeStartMaskSkull  = 0b0000000000010000
-	ChildTradeStartMaskSpooky = 0b0000000000100000
-	ChildTradeStartMaskBunny  = 0b0000000001000000
-	ChildTradeStartMaskGoron  = 0b0000000010000000
-	ChildTradeStartMaskZora   = 0b0000000100000000
-	ChildTradeStartMaskGerudo = 0b0000001000000000
-	ChildTradeStartMaskTruth  = 0b0000010000000000
+	ChildTradeStartWeirdEgg   ShuffleTradeChild = 0b0000000000000001
+	ChildTradeStartChicken    ShuffleTradeChild = 0b0000000000000010
+	ChildTradeStartLetter     ShuffleTradeChild = 0b0000000000000100
+	ChildTradeStartMaskKeaton ShuffleTradeChild = 0b0000000000001000
+	ChildTradeStartMaskSkull  ShuffleTradeChild = 0b0000000000010000
+	ChildTradeStartMaskSpooky ShuffleTradeChild = 0b0000000000100000
+	ChildTradeStartMaskBunny  ShuffleTradeChild = 0b0000000001000000
+	ChildTradeStartMaskGoron  ShuffleTradeChild = 0b0000000010000000
+	ChildTradeStartMaskZora   ShuffleTradeChild = 0b0000000100000000
+	ChildTradeStartMaskGerudo ShuffleTradeChild = 0b0000001000000000
+	ChildTradeStartMaskTruth  ShuffleTradeChild = 0b0000010000000000
 )
 
 const (
 	ForestTemplePoesNone ForestTemplePoes = 0
-	ForestTempleAmyMeg                    = 1
-	ForestTempleJoBeth                    = 2
+	ForestTempleAmyMeg   ForestTemplePoes = 1
+	ForestTempleJoBeth   ForestTemplePoes = 2
 )
 
 const (
 	ScarecrowBehaviorDefault ScarecrowBehavior = 0
-	ScarecrowBehaviorFast                      = 1
-	ScarecrowBehaviorFree                      = 2
+	ScarecrowBehaviorFast    ScarecrowBehavior = 1
+	ScarecrowBehaviorFree    ScarecrowBehavior = 2
 )
 
 func (this ScarecrowBehavior) String() string {

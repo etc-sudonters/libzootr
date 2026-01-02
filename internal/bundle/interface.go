@@ -2,7 +2,7 @@ package bundle
 
 import (
 	"fmt"
-	"sudonters/libzootr/internal/skelly/bitset32"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 )
 

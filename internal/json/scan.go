@@ -358,7 +358,7 @@ func (this *Scanner) scanLiteral(buffer []byte, atEof bool, literal string, scan
 	bytes := []byte(literal)
 	size := len(bytes)
 	(*n)--
-	if *n+size >= len(buffer) {
+	if *n+size > len(buffer) {
 		if atEof {
 			return nil, this.invalidToken(string(buffer))
 		}

@@ -2,8 +2,8 @@ package columns
 
 import (
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
-	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 )
 
@@ -37,8 +37,6 @@ func SizedSlice(size uint32) *Slice {
  * empty rows in the slice, they are left `nil`.
  */
 type Slice struct {
-	id         table.ColumnId
-	typ        reflect.Type
 	components []table.Value
 	members    *bitset32.Bitset
 }

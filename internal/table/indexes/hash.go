@@ -1,16 +1,11 @@
 package indexes
 
 import (
-	"sudonters/libzootr/internal/skelly/bitset32"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 )
 
 type hashbitmap[T comparable] map[T]bitset32.Bitset
-
-func (h hashbitmap[T]) isset(key T, which uint32) bool {
-	members := h.membersetfor(key)
-	return members.IsSet(which)
-}
 
 func (h hashbitmap[T]) set(key T, which uint32) {
 	members := h.membersetfor(key)

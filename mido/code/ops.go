@@ -64,22 +64,22 @@ func Make(op Op, operands ...int) Instructions {
 
 const (
 	NOP        Op = 0x00
-	ERR           = 0xFF
-	PUSH_T        = 0x21
-	PUSH_F        = 0x22
-	PUSH_CONST    = 0x23
-	PUSH_PTR      = 0x24
-	PUSH_STR      = 0x25
-	PUSH_FUNC     = 0x26
-	INVERT        = 0x31
-	NEED_ALL      = 0x32
-	NEED_ANY      = 0x33
-	CHK_QTY       = 0x41
-	INVOKE        = 0x51
-	INVOKE_0      = 0x52
-	CMP_EQ        = 0x61
-	CMP_NQ        = 0x62
-	CMP_LT        = 0x63
+	ERR        Op = 0xFF
+	PUSH_T     Op = 0x21
+	PUSH_F     Op = 0x22
+	PUSH_CONST Op = 0x23
+	PUSH_PTR   Op = 0x24
+	PUSH_STR   Op = 0x25
+	PUSH_FUNC  Op = 0x26
+	INVERT     Op = 0x31
+	NEED_ALL   Op = 0x32
+	NEED_ANY   Op = 0x33
+	CHK_QTY    Op = 0x41
+	INVOKE     Op = 0x51
+	INVOKE_0   Op = 0x52
+	CMP_EQ     Op = 0x61
+	CMP_NQ     Op = 0x62
+	CMP_LT     Op = 0x63
 )
 
 type Instructions []byte

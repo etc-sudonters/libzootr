@@ -2,9 +2,9 @@ package table
 
 import (
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"math"
 	"reflect"
-	"sudonters/libzootr/internal/skelly/bitset32"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 )

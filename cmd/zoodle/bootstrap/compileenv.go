@@ -106,7 +106,7 @@ func loadscripts(ocm *zecs.Ocm, env *mido.CompileEnv) error {
 		if !exists {
 			panic(fmt.Errorf("somehow scripted func %s is missing, a mystery", name))
 		}
-		eng.SetValues(entity, zecs.Values{magicbean.ScriptParsed{script.Body}})
+		eng.SetValues(entity, zecs.Values{magicbean.ScriptParsed{Node: script.Body}})
 	}
 
 	return nil
@@ -272,7 +272,7 @@ func installConnectionGenerator(ocm *zecs.Ocm) mido.ConfigureCompiler {
 	}
 }
 
-var escaping = regexp.MustCompile("['()[\\]-]")
+var escaping = regexp.MustCompile(`['()[\]-]`)
 
 func escape(name string) string {
 	name = escaping.ReplaceAllLiteralString(name, "")
@@ -304,7 +304,7 @@ func (this ConnectionGenerator) AddConnectionTo(region string, rule ast.Node) (*
 
 	node := this.Nodes.Region(magicbean.Name(region))
 	edge := node.Has(placement)
-	edge.Proxy.Attach(magicbean.RuleParsed{rule})
+	edge.Proxy.Attach(magicbean.RuleParsed{Node: rule})
 
 	symbol := this.Symbols.Declare(string(tokenName), symbols.TOKEN)
 	this.Objects.AssociateSymbol(symbol, ptr)

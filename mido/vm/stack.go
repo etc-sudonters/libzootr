@@ -20,24 +20,12 @@ type stack[T any] struct {
 	ptr   int
 }
 
-func (this *stack[T]) reset() {
-	this.ptr = 0
-}
-
 func (this *stack[T]) slice(start, count int) []T {
 	return this.items[start : start+count]
 }
 
 func (this *stack[T]) popN(n int) {
 	this.ptr -= n
-}
-
-func (this *stack[T]) top() T {
-	if this.ptr < 1 {
-		panic(ErrStackEmpty)
-	}
-
-	return this.items[this.ptr-1]
 }
 
 func (this *stack[T]) push(item T) {

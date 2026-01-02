@@ -158,19 +158,14 @@ func (this *VM) Dis(w io.Writer, bytecode compiler.Bytecode) {
 				name := bytecode.Names[constant]
 				fmt.Fprintf(w, "\tname:\t%q\n", name)
 				fmt.Fprintf(w, "\ttag:\t%s\n\tptr:\t%04X\n", ptr.Tag, ptr.Addr)
-				break
 			case objects.STR_STR32:
 				fmt.Fprintf(w, "\tvalue:\t%q\n", this.Objects.DerefString(obj))
-				break
 			case objects.STR_BYTES:
 				fmt.Fprintf(w, "\tvalue:\t%v\n", objects.UnpackBytes(obj))
-				break
 			case objects.STR_BOOL:
 				fmt.Fprintf(w, "\tvalue:\t%t\n", objects.UnpackBool(obj))
-				break
 			case objects.STR_F64:
 				fmt.Fprintf(w, "\tvalue:\t%f\n", objects.UnpackF64(obj))
-				break
 			}
 			fmt.Fprintln(w)
 		}

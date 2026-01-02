@@ -85,10 +85,6 @@ func expectFloat(body string) func(*severalTokens) {
 	return expectAtom(scanned_number, body)
 }
 
-func expectTrue() func(*severalTokens) {
-	return expectAtom(scanned_true, "true")
-}
-
 func expectFalse() func(*severalTokens) {
 	return expectAtom(scanned_false, "false")
 }

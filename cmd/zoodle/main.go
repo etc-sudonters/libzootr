@@ -69,7 +69,6 @@ func main() {
 	stopProfiling := profileto(opts.profile)
 	defer stopProfiling()
 	appExitCode = runMain(ctx, appstd, opts, fs)
-	return
 }
 
 type missingRequired string // option name

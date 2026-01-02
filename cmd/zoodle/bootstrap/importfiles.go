@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"iter"
 	"log/slog"
@@ -94,10 +93,6 @@ func (this LoadPaths) readplacements(ctx context.Context, fs fs.FS) iter.Seq2[im
 	}
 }
 
-func readrelations(ctx context.Context, r io.Reader) iter.Seq2[importers.DumpedRelation, error] {
-	return importers.DumpRelations.ImportFrom(ctx, r)
-}
-
 func (this LoadPaths) readrelationsdir(ctx context.Context, fsys fs.FS, store func(importers.DumpedRelation) error) error {
 	return filepath.WalkDir(string(this.Relations), func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -174,34 +169,24 @@ func storeTokens(ctx context.Context, fs fs.FS, tokens tracking.Tokens, paths Lo
 		switch item.Type {
 		case "BossKey", "bosskey":
 			attachments.Add(magicbean.BossKey{}, magicbean.ParseDungeonGroup(item.Name))
-			break
 		case "Compass", "compass":
 			attachments.Add(magicbean.Compass{}, magicbean.ParseDungeonGroup(item.Name))
-			break
 		case "Drop", "drop":
 			attachments.Add(magicbean.Drop{})
-			break
 		case "DungeonReward", "dungeonreward":
 			attachments.Add(magicbean.DungeonReward{})
-			break
 		case "Event", "event":
 			attachments.Add(magicbean.Event{})
-			break
 		case "GanonBossKey", "ganonbosskey":
 			attachments.Add(magicbean.BossKey{}, magicbean.DUNGEON_GANON_CASTLE)
-			break
 		case "Item", "item":
 			attachments.Add(magicbean.Item{})
-			break
 		case "Map", "map":
 			attachments.Add(magicbean.Map{}, magicbean.ParseDungeonGroup(item.Name))
-			break
 		case "Refill", "refill":
 			attachments.Add(magicbean.Refill{})
-			break
 		case "Shop", "shop":
 			attachments.Add(magicbean.Shop{})
-			break
 		case "SilverRupee", "silverrupee":
 			attachments.Add(magicbean.ParseSilverRupeePuzzle(item.Name))
 
@@ -210,17 +195,14 @@ func storeTokens(ctx context.Context, fs fs.FS, tokens tracking.Tokens, paths Lo
 			} else {
 				attachments.Add(magicbean.SilverRupee{})
 			}
-			break
 		case "SmallKey", "smallkey",
 			"HideoutSmallKey", "hideoutsmallkey",
 			"TCGSmallKey", "tcgsmallkey":
 			attachments.Add(magicbean.SmallKey{}, magicbean.ParseDungeonGroup(item.Name))
-			break
 		case "SmallKeyRing", "smallkeyring",
 			"HideoutSmallKeyRing", "hideoutsmallkeyring",
 			"TCGSmallKeyRing", "tcgsmallkeyring":
 			attachments.Add(magicbean.DungeonKeyRing{}, magicbean.ParseDungeonGroup(item.Name))
-			break
 		case "Song", "song":
 			switch item.Name {
 			case "Prelude of Light":
@@ -250,10 +232,8 @@ func storeTokens(ctx context.Context, fs fs.FS, tokens tracking.Tokens, paths Lo
 			default:
 				panic(fmt.Errorf("unknown song %q", item.Name))
 			}
-			break
 		case "GoldSkulltulaToken", "goldskulltulatoken":
 			attachments.Add(magicbean.GoldSkulltulaToken{})
-			break
 		}
 
 		if item.Special != nil {
