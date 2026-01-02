@@ -9,10 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 	"sudonters/libzootr/importers"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/mido/optimizer"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table/ocm"
 
 	"github.com/etc-sudonters/substrate/slipup"
 )
@@ -133,17 +134,18 @@ func (this LoadPaths) readrelationsdir(ctx context.Context, fsys fs.FS, store fu
 	})
 }
 
-func storeScripts(ctx context.Context, fs fs.FS, ocm *zecs.Ocm, paths LoadPaths) error {
-	eng := ocm.Engine()
+func storeScripts(ctx context.Context, fs fs.FS, entities *ocm.Entities, paths LoadPaths) error {
 	for script, err := range paths.readscripts(ctx, fs) {
 		if err != nil {
 			return err
 		}
-		eng.InsertRow(
+		entity, err := entities.CreateEntity()
+		internal.PanicOnError(err)
+		internal.PanicOnError(entity.Attach(
 			magicbean.ScriptDecl(script.Decl),
 			magicbean.ScriptSource(script.Src),
 			name(optimizer.FastScriptNameFromDecl(script.Decl)),
-		)
+		))
 	}
 	return nil
 }
@@ -153,8 +155,11 @@ func storeTokens(ctx context.Context, fs fs.FS, tokens tracking.Tokens, paths Lo
 		if decodeErr != nil {
 			return decodeErr
 		}
-		var attachments zecs.Attaching
-		token := tokens.Named(name(item.Name))
+		var attachments ocm.Components
+		token, err := tokens.Named(name(item.Name))
+		if err != nil {
+			return slipup.Describef(err, "failed finding item name %q", item.Name)
+		}
 
 		if item.Advancement {
 			attachments.Add(magicbean.PriorityAdvancement)
@@ -257,7 +262,9 @@ func storePlacements(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens
 		}
 		place := nodes.Placement(name(location.Name))
 		if location.Default != "" {
-			place.DefaultToken(tokens.Named(name(location.Default)))
+			token, err := tokens.Named(name(location.Default))
+			internal.PanicOnError(err)
+			place.DefaultToken(token)
 		}
 	}
 
@@ -281,15 +288,16 @@ func storeRelations(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens 
 		}
 
 		for event, rule := range relation.Events {
-			token := tokens.Named(name(event))
-			token.Attach(magicbean.Event{})
+			token, err := tokens.Named(name(event))
+			internal.PanicOnError(err)
+			internal.PanicOnError(token.Attach(magicbean.Event{}))
 			placement := nodes.Placement(namef("%s %s", relation.RegionName, event))
 			placement.Fixed(token)
 			edge := region.Has(placement)
 			edge.Attach(magicbean.RuleSource(rule))
 		}
 
-		var attachments zecs.Attaching
+		var attachments ocm.Components
 
 		if relation.RegionName == "Root" {
 			attachments.Add(magicbean.WorldGraphRoot{})

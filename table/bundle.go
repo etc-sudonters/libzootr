@@ -81,3 +81,21 @@ func (s *single) All(yield YieldRow) {
 func (s single) Len() int {
 	return 1
 }
+
+type RowIds struct {
+	fill bitset32.Bitset
+}
+
+func (this *RowIds) All(yield YieldRow) {
+	var vt ValueTuple
+
+	for rowId := range bitset32.Iter(&this.fill).All {
+		if !yield(RowId(rowId), vt) {
+			return
+		}
+	}
+}
+
+func (this *RowIds) Len() int {
+	return this.fill.Len()
+}

@@ -10,14 +10,14 @@ import (
 	"sudonters/libzootr/mido/code"
 	"sudonters/libzootr/mido/compiler"
 	"sudonters/libzootr/mido/objects"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table/ocm"
 
 	"github.com/etc-sudonters/substrate/dontio"
 )
 
 type ExplorableEdge struct {
 	Kind   EdgeKind
-	Entity zecs.Entity
+	Entity ocm.Entity
 	Rule   RuleCompiled
 	Src    RuleSource
 	Name   Name
@@ -29,7 +29,7 @@ type ExplorableWorld struct {
 }
 
 func (this ExplorableWorld) Edge(from, to graph32.Node) (ExplorableEdge, bool) {
-	edge, exists := this.Edges[Connection{zecs.Entity(from), zecs.Entity(to)}]
+	edge, exists := this.Edges[Connection{ocm.Entity(from), ocm.Entity(to)}]
 	return edge, exists
 }
 

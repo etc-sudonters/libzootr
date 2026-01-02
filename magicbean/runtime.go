@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/mido/objects"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table/ocm"
 )
 
 func ConstBool(b bool) objects.BuiltInFunction {
@@ -80,15 +80,15 @@ func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, zootrSettings *se
 
 		ptr := objects.UnpackPtr32(args[0])
 		qty := objects.UnpackF64(args[1])
-		result := pocket.Has(zecs.Entity(ptr.Addr), qty)
+		result := pocket.Has(ocm.Entity(ptr.Addr), qty)
 		return objects.PackBool(result), nil
 	}
 
 	builtins.HasAnyOf = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
-		items := make([]zecs.Entity, len(args))
+		items := make([]ocm.Entity, len(args))
 		for i, arg := range args {
 			ptr := objects.UnpackPtr32(arg)
-			items[i] = zecs.Entity(ptr.Addr)
+			items[i] = ocm.Entity(ptr.Addr)
 		}
 
 		result := pocket.HasAny(items)
@@ -96,10 +96,10 @@ func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, zootrSettings *se
 	}
 
 	builtins.HasEvery = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
-		items := make([]zecs.Entity, len(args))
+		items := make([]ocm.Entity, len(args))
 		for i, arg := range args {
 			ptr := objects.UnpackPtr32(arg)
-			items[i] = zecs.Entity(ptr.Addr)
+			items[i] = ocm.Entity(ptr.Addr)
 		}
 
 		result := pocket.HasEvery(items)
@@ -152,7 +152,7 @@ func CreateBuiltInHasFuncs(builtins *BuiltIns, pocket *Pocket, zootrSettings *se
 	if zootrSettings.Shuffling.OcarinaNotes {
 		builtins.HasNotesForSong = func(_ *objects.Table, args []objects.Object) (objects.Object, error) {
 			ptr := objects.UnpackPtr32(args[0])
-			return objects.PackBool(pocket.HasAllNotes(zecs.Entity(ptr.Addr))), nil
+			return objects.PackBool(pocket.HasAllNotes(ocm.Entity(ptr.Addr))), nil
 		}
 	} else {
 		builtins.HasNotesForSong = ConstBool(true)

@@ -29,6 +29,10 @@ func New() *Table {
 	}
 }
 
+func (tbl *Table) IsRow(rowId RowId) bool {
+	return int(rowId) < len(tbl.Rows)
+}
+
 func (tbl *Table) Lookup(c ColumnId, v Value) bitset32.Bitset {
 	if idx, ok := tbl.indexes[c]; ok {
 		return idx.Rows(v)

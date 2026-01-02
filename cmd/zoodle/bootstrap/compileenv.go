@@ -3,7 +3,9 @@ package bootstrap
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
@@ -12,7 +14,8 @@ import (
 	"sudonters/libzootr/mido/objects"
 	"sudonters/libzootr/mido/optimizer"
 	"sudonters/libzootr/mido/symbols"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/ocm"
 )
 
 var kind2tag = map[symbols.Kind]objects.PtrTag{
@@ -21,11 +24,16 @@ var kind2tag = map[symbols.Kind]objects.PtrTag{
 	symbols.TOKEN:   objects.PtrToken,
 }
 
-func createptrs(ocm *zecs.Ocm, syms *symbols.Table, objs *objects.Builder) {
-	q := ocm.Query()
-	q.Build(zecs.Load[symbols.Kind], zecs.WithOut[magicbean.Ptr], zecs.Load[magicbean.Name])
+func createptrs(entities *ocm.Entities, syms *symbols.Table, objs *objects.Builder) {
+	rows, err := entities.Query(
+		table.Load[symbols.Kind],
+		table.Load[magicbean.Name],
+		table.NotExists[magicbean.Ptr],
+	)
 
-	for ent, tup := range q.Rows {
+	internal.PanicOnError(err)
+
+	for ent, tup := range rows.All {
 		kind := tup.Values[0].(symbols.Kind)
 		tag, exists := kind2tag[kind]
 		if !exists {
@@ -38,23 +46,23 @@ func createptrs(ocm *zecs.Ocm, syms *symbols.Table, objs *objects.Builder) {
 			panic(fmt.Errorf("found %s in ocm but not in symbols", name))
 		}
 
-		entity := ocm.Proxy(ent)
+		entity, _ := entities.Proxy(ent)
 		ptr := objects.PackPtr32(objects.Ptr32{Tag: tag, Addr: objects.Addr32(ent)})
 		objs.AssociateSymbol(symbol, ptr)
 		entity.Attach(magicbean.Ptr(ptr))
 	}
 }
 
-func loadsymbols(ocm *zecs.Ocm, syms *symbols.Table) error {
+func loadsymbols(entities *ocm.Entities, syms *symbols.Table) error {
 	batches := []tagging{
-		{kind: symbols.REGION, q: []zecs.BuildQuery{zecs.With[magicbean.Region]}},
-		{kind: symbols.TRANSIT, q: []zecs.BuildQuery{zecs.With[magicbean.Connection]}},
-		{kind: symbols.TOKEN, q: []zecs.BuildQuery{zecs.With[magicbean.Token]}},
-		{kind: symbols.SCRIPTED_FUNC, q: []zecs.BuildQuery{zecs.With[magicbean.ScriptDecl]}},
+		{kind: symbols.REGION, q: []table.Q{table.Exists[magicbean.Region]}},
+		{kind: symbols.TRANSIT, q: []table.Q{table.Exists[magicbean.Connection]}},
+		{kind: symbols.TOKEN, q: []table.Q{table.Exists[magicbean.Token]}},
+		{kind: symbols.SCRIPTED_FUNC, q: []table.Q{table.Exists[magicbean.ScriptDecl]}},
 	}
 
 	for _, batch := range batches {
-		batch.tagall(ocm, syms)
+		batch.tagall(entities, syms)
 	}
 
 	return nil
@@ -62,32 +70,31 @@ func loadsymbols(ocm *zecs.Ocm, syms *symbols.Table) error {
 
 type tagging struct {
 	kind symbols.Kind
-	q    []zecs.BuildQuery
+	q    []table.Q
 }
 
-func (this tagging) tagall(ocm *zecs.Ocm, syms *symbols.Table) {
-	q := ocm.Query()
-	q.Build(zecs.Load[name], this.q...)
-	rows, err := q.Execute()
+func (this tagging) tagall(entities *ocm.Entities, syms *symbols.Table) {
+	q := []table.Q{table.Load[name]}
+	q = slices.Concat(q, this.q)
+	rows, err := entities.Query(q...)
+
 	PanicWhenErr(err)
 	for ent, tup := range rows.All {
-		entity := ocm.Proxy(ent)
+		entity, _ := entities.Proxy(ent)
 		name := string(tup.Values[0].(name))
 		syms.Declare(name, this.kind)
-		entity.Attach(this.kind)
+		internal.PanicOnError(entity.Attach(this.kind))
 	}
 }
 
-func loadscripts(ocm *zecs.Ocm, env *mido.CompileEnv) error {
-	q := ocm.Query()
-	q.Build(
-		zecs.Load[name],
-		zecs.Load[magicbean.ScriptDecl],
-		zecs.Load[magicbean.ScriptSource],
-		zecs.WithOut[magicbean.RuleParsed],
+func loadscripts(entities *ocm.Entities, env *mido.CompileEnv) error {
+	rows, rowErr := entities.Query(
+		table.Load[name],
+		table.Load[magicbean.ScriptDecl],
+		table.Load[magicbean.ScriptSource],
+		table.NotExists[magicbean.RuleParsed],
 	)
 
-	rows, rowErr := q.Execute()
 	PanicWhenErr(rowErr)
 	decls := make(map[string]string, rows.Len())
 
@@ -99,24 +106,21 @@ func loadscripts(ocm *zecs.Ocm, env *mido.CompileEnv) error {
 
 	PanicWhenErr(env.BuildScriptedFuncs(decls))
 
-	eng := ocm.Engine()
 	for entity, tup := range rows.All {
 		name := tup.Values[0].(name)
 		script, exists := env.ScriptedFuncs.Get(string(name))
 		if !exists {
 			panic(fmt.Errorf("somehow scripted func %s is missing, a mystery", name))
 		}
-		eng.SetValues(entity, zecs.Values{magicbean.ScriptParsed{Node: script.Body}})
+		p, _ := entities.Proxy(entity)
+		internal.PanicOnError(p.Attach(magicbean.ScriptParsed{Node: script.Body}))
 	}
 
 	return nil
 }
 
-func aliassymbols(ocm *zecs.Ocm, syms *symbols.Table) error {
-	q := ocm.Query()
-	q.Build(zecs.Load[name], zecs.With[magicbean.Token])
-	eng := ocm.Engine()
-	rows, err := q.Execute()
+func aliassymbols(entities *ocm.Entities, syms *symbols.Table) error {
+	rows, err := entities.Query(table.Load[name], table.Exists[magicbean.Token])
 	PanicWhenErr(err)
 
 	for id, tup := range rows.All {
@@ -129,7 +133,8 @@ func aliassymbols(ocm *zecs.Ocm, syms *symbols.Table) error {
 		case symbols.TOKEN:
 			alias := escape(name)
 			syms.Alias(original, alias)
-			PanicWhenErr(eng.SetValues(id, zecs.Values{magicbean.AliasingName(alias)}))
+			proxy, _ := entities.Proxy(id)
+			PanicWhenErr(proxy.Attach(magicbean.AliasingName(alias)))
 		default:
 			panic(fmt.Errorf("expected to only alias function or token: %s", original))
 		}
@@ -257,12 +262,15 @@ func installCompilerFunctions(these *settings.Zootr) mido.ConfigureCompiler {
 	}
 }
 
-func installConnectionGenerator(ocm *zecs.Ocm) mido.ConfigureCompiler {
+func installConnectionGenerator(entities *ocm.Entities) mido.ConfigureCompiler {
 	return func(env *mido.CompileEnv) {
 		env.Optimize.AddOptimizer(func(ce *mido.CompileEnv) ast.Rewriter {
 			var conngen ConnectionGenerator
-			conngen.Nodes = tracking.NewNodes(ocm)
-			conngen.Tokens = tracking.NewTokens(ocm)
+			var err error
+			conngen.Nodes, err = tracking.NewNodes(entities)
+			internal.PanicOnError(err)
+			conngen.Tokens, err = tracking.NewTokens(entities)
+			internal.PanicOnError(err)
 			conngen.Symbols = ce.Symbols
 			conngen.Objects = ce.Objects
 
@@ -295,7 +303,8 @@ func (this ConnectionGenerator) AddConnectionTo(region string, rule ast.Node) (*
 		return symbol, nil
 	}
 
-	token := this.Tokens.Named(tokenName)
+	token, tokenErr := this.Tokens.Named(tokenName)
+	internal.PanicOnError(tokenErr)
 	placement := this.Nodes.Placement(magicbean.NameF("Place%s", suffix))
 
 	placement.Fixed(token)

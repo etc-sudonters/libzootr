@@ -1,29 +1,33 @@
 package bootstrap
 
 import (
-	"github.com/etc-sudonters/substrate/skelly/graph32"
+	"slices"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/ocm"
+
+	"github.com/etc-sudonters/substrate/skelly/graph32"
 )
 
-func explorableworldfrom(ocm *zecs.Ocm) magicbean.ExplorableWorld {
+func explorableworldfrom(entities *ocm.Entities) magicbean.ExplorableWorld {
 	var world magicbean.ExplorableWorld
-	q := ocm.Query()
-	q.Build(
-		zecs.Load[magicbean.RuleCompiled],
-		zecs.Load[magicbean.EdgeKind],
-		zecs.Load[magicbean.Connection],
-		zecs.Load[magicbean.Name],
-		zecs.Optional[magicbean.RuleSource],
+	rows, err := entities.Query(
+		table.Load[magicbean.RuleCompiled],
+		table.Load[magicbean.EdgeKind],
+		table.Load[magicbean.Connection],
+		table.Load[magicbean.Name],
+		table.Optional[magicbean.RuleSource],
 	)
-
-	rows, err := q.Execute()
 	PanicWhenErr(err)
 
 	world.Edges = make(map[magicbean.Connection]magicbean.ExplorableEdge, rows.Len())
 	world.Graph = graph32.WithCapacity(rows.Len() * 2)
 	directed := graph32.Builder{Graph: &world.Graph}
-	roots := zecs.EntitiesMatching(ocm, zecs.With[magicbean.WorldGraphRoot])
+	matching, rootsErr := entities.Matching(table.Exists[magicbean.WorldGraphRoot])
+	internal.PanicOnError(rootsErr)
+	roots := slices.Collect(matching)
+
 	if len(roots) == 0 {
 		panic("no graph roots loaded")
 	}

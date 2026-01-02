@@ -1,86 +1,95 @@
 package bootstrap
 
 import (
-	"sudonters/libzootr/internal/query"
-	"sudonters/libzootr/internal/table"
+	"errors"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/optimizer"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/ocm"
+
+	"github.com/etc-sudonters/substrate/slipup"
 )
 
-func parseall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
-	q := ocm.Query()
-	q.Build(
-		zecs.Load[magicbean.RuleSource],
-		zecs.With[magicbean.Connection],
-		zecs.WithOut[magicbean.RuleParsed],
+func parseall(entities *ocm.Entities, codegen *mido.CodeGen) error {
+	rows, err := entities.Query(
+		table.Load[magicbean.RuleSource],
+		table.Exists[magicbean.Connection],
+		table.NotExists[magicbean.RuleParsed],
 	)
 
-	for ent, tup := range q.Rows {
-		entity := ocm.Proxy(ent)
+	if err != nil {
+		return slipup.Describe(err, "failed to find rules to parse")
+	}
+
+	var parseErr error
+
+	for row, tup := range rows.All {
+		entity, _ := entities.Proxy(row)
 		source := tup.Values[0].(magicbean.RuleSource)
 
 		parsed, err := codegen.Parse(string(source))
-		PanicWhenErr(err)
+		if err != nil {
+			parseErr = errors.Join(parseErr, slipup.Describef(err, "failed to parse %q", source))
+		}
+
 		entity.Attach(magicbean.RuleParsed{Node: parsed})
 	}
 
-	return nil
+	return parseErr
 }
 
-func optimizeall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
-	eng := ocm.Engine()
-	unoptimized := ocm.Query()
-	unoptimized.Build(
-		zecs.Load[magicbean.RuleParsed],
-		zecs.Load[magicbean.Connection],
-		zecs.WithOut[magicbean.RuleOptimized],
+func optimizeall(entities *ocm.Entities, codegen *mido.CodeGen) error {
+	rows, err := entities.Query(
+		table.Load[magicbean.RuleParsed],
+		table.Load[magicbean.Connection],
+		table.NotExists[magicbean.RuleOptimized],
 	)
 
-	for {
-		rows, err := unoptimized.Execute()
-		PanicWhenErr(err)
-		if rows.Len() == 0 {
-			break
-		}
+	if err != nil {
+		return slipup.Describe(err, "failed to find rules to optimize")
+	}
+	if rows.Len() == 0 {
+		return nil
+	}
 
-		for ent, tup := range rows.All {
-			entity := ocm.Proxy(ent)
-			parsed := tup.Values[0].(magicbean.RuleParsed)
-			edge := tup.Values[1].(magicbean.Connection)
+	for ent, tup := range rows.All {
+		entity, _ := entities.Proxy(ent)
+		parsed := tup.Values[0].(magicbean.RuleParsed)
+		edge := tup.Values[1].(magicbean.Connection)
 
-			parent, parentErr := eng.GetValues(
-				edge.From, table.ColumnIds{
-					query.MustAsColumnId[magicbean.Name](eng),
-				},
-			)
-			PanicWhenErr(parentErr)
-			optimizer.SetCurrentLocation(codegen.Context, string(parent.Values[0].(magicbean.Name)))
-			optimized, optimizeErr := codegen.Optimize(parsed.Node)
-			PanicWhenErr(optimizeErr)
-			entity.Attach(magicbean.RuleOptimized{Node: optimized})
-		}
+		fromEntity, _ := entities.Proxy(edge.From)
+		parent, parentErr := fromEntity.Values(table.ColumnIdFor[magicbean.Name])
+		PanicWhenErr(parentErr)
+		optimizer.SetCurrentLocation(codegen.Context, string(parent.Values[0].(magicbean.Name)))
+		optimized, optimizeErr := codegen.Optimize(parsed.Node)
+		PanicWhenErr(optimizeErr)
+		entity.Attach(magicbean.RuleOptimized{Node: optimized})
 	}
 
 	return nil
 }
 
-func compileall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
-	uncompiled := ocm.Query()
-	uncompiled.Build(
-		zecs.Load[magicbean.RuleOptimized],
-		zecs.With[magicbean.Connection],
-		zecs.WithOut[magicbean.RuleCompiled],
+func compileall(entities *ocm.Entities, codegen *mido.CodeGen) error {
+	rows, err := entities.Query(
+		table.Load[magicbean.RuleOptimized],
+		table.Exists[magicbean.Connection],
+		table.NotExists[magicbean.RuleCompiled],
 	)
 
-	for ent, tup := range uncompiled.Rows {
-		entity := ocm.Proxy(ent)
-		compiling := tup.Values[0].(magicbean.RuleOptimized)
+	if err != nil {
+		return slipup.Describe(err, "failed to find rules to compile")
+	}
 
+	for ent, tup := range rows.All {
+		entity, _ := entities.Proxy(ent)
+		compiling := tup.Values[0].(magicbean.RuleOptimized)
 		bytecode, err := codegen.Compile(compiling.Node)
-		PanicWhenErr(err)
-		entity.Attach(magicbean.RuleCompiled(bytecode))
+		if err != nil {
+			return slipup.Describe(err, "failed while compiling rule")
+		}
+		internal.PanicOnError(entity.Attach(magicbean.RuleCompiled(bytecode)))
 	}
 
 	return nil

@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"sudonters/libzootr/cmd/zoodle/bootstrap"
-	"sudonters/libzootr/internal/query"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/internal/shufflequeue"
-	"sudonters/libzootr/internal/table"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/objects"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/ocm"
 
 	"github.com/etc-sudonters/substrate/dontio"
 )
@@ -36,7 +37,7 @@ func fromStartingAge(start settings.StartingAge) Age {
 }
 
 func explore(ctx context.Context, xplr *magicbean.Exploration, generation *magicbean.Generation, age Age) magicbean.ExplorationResults {
-	pockets := magicbean.NewPockets(&generation.Inventory, &generation.Ocm)
+	pockets := magicbean.NewPockets(&generation.Inventory, generation.Entities)
 
 	funcs := magicbean.BuiltIns{}
 	magicbean.CreateBuiltInHasFuncs(&funcs, &pockets, &generation.Settings)
@@ -63,10 +64,10 @@ func explore(ctx context.Context, xplr *magicbean.Exploration, generation *magic
 	return generation.World.ExploreAvailableEdges(ctx, xplr)
 }
 
-func PtrsMatching(ocm *zecs.Ocm, query ...zecs.BuildQuery) []objects.Object {
-	q := ocm.Query()
-	q.Build(zecs.Load[magicbean.Ptr], zecs.With[magicbean.Token])
-	rows, err := q.Execute()
+func PtrsMatching(entities *ocm.Entities, query ...table.Q) []objects.Object {
+	q := []table.Q{table.Load[magicbean.Ptr], table.Exists[magicbean.Token]}
+	q = slices.Concat(q, query)
+	rows, err := entities.Query(q...)
 	bootstrap.PanicWhenErr(err)
 	ptrs := make([]objects.Object, 0, rows.Len())
 
@@ -79,13 +80,12 @@ func PtrsMatching(ocm *zecs.Ocm, query ...zecs.BuildQuery) []objects.Object {
 }
 
 func CollectStartingItems(generation *magicbean.Generation) {
-	ocm := &generation.Ocm
+	entities := generation.Entities
 	rng := &generation.Rng
 	these := &generation.Settings
-	eng := ocm.Engine()
 
 	type collecting struct {
-		entity zecs.Entity
+		entity ocm.Entity
 		qty    float64
 	}
 	var starting []collecting
@@ -104,7 +104,8 @@ func CollectStartingItems(generation *magicbean.Generation) {
 		starting = new
 	}
 
-	tokens := tracking.NewTokens(ocm)
+	tokens, err := tracking.NewTokens(entities)
+	internal.PanicOnError(err)
 
 	if these.Locations.OpenDoorOfTime {
 		collect(tokens.MustGet("Time Travel"), 1)
@@ -117,19 +118,23 @@ func CollectStartingItems(generation *magicbean.Generation) {
 
 	collect(tokens.MustGet("Deku Stick (1)"), 10)
 
-	starting = append(starting, collecting{OneOfRandomly(ocm, rng, zecs.With[magicbean.Song]), 1})
-	starting = append(starting, collecting{OneOfRandomly(ocm, rng, zecs.With[magicbean.DungeonReward]), 1})
+	starting = append(starting, collecting{OneOfRandomly(entities, rng, table.Exists[magicbean.Song]), 1})
+	starting = append(starting, collecting{OneOfRandomly(entities, rng, table.Exists[magicbean.DungeonReward]), 1})
 
 	for _, collect := range starting {
-		selected, err := eng.GetValues(collect.entity, table.ColumnIds{query.MustAsColumnId[magicbean.Name](eng)})
-		bootstrap.PanicWhenErr(err)
-		fmt.Printf("starting with %f %s\n", collect.qty, selected.Values[0].(magicbean.Name))
+		proxy, _ := entities.Proxy(collect.entity)
+		values, err := proxy.Values(table.ColumnIdFor[magicbean.Name])
+		internal.PanicOnError(err)
+		fmt.Printf("starting with %f %s\n", collect.qty, values.Values[0].(magicbean.Name))
 		generation.Inventory.Collect(collect.entity, collect.qty)
 	}
 }
 
-func OneOfRandomly(ocm *zecs.Ocm, rng *rand.Rand, query ...zecs.BuildQuery) zecs.Entity {
-	matching := shufflequeue.From(rng, zecs.EntitiesMatching(ocm, query...))
+func OneOfRandomly(entities *ocm.Entities, rng *rand.Rand, query ...table.Q) ocm.Entity {
+	matched, err := entities.Matching(query...)
+	internal.PanicOnError(err)
+
+	matching := shufflequeue.From(rng, slices.Collect(matched))
 	randomly, err := matching.Dequeue()
 	bootstrap.PanicWhenErr(err)
 	return *randomly

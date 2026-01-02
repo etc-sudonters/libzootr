@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
-	"sudonters/libzootr/internal/table"
+	"sudonters/libzootr/table"
 )
 
 func SliceColumn[T any]() *table.ColumnBuilder {

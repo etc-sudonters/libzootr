@@ -6,7 +6,7 @@ import (
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/compiler"
 	"sudonters/libzootr/mido/objects"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table/ocm"
 )
 
 type Name string
@@ -16,10 +16,10 @@ func NameF(tpl string, v ...any) Name {
 	return Name(fmt.Sprintf(tpl, v...))
 }
 
-type Connection struct{ From, To zecs.Entity }
+type Connection struct{ From, To ocm.Entity }
 type Region struct{}
 type Placement struct{}
-type DefaultPlacement zecs.Entity
+type DefaultPlacement ocm.Entity
 type Token struct{}
 type Fixed struct{}
 
@@ -32,8 +32,8 @@ type RuleParsed struct{ ast.Node }
 type RuleOptimized struct{ ast.Node }
 type RuleCompiled compiler.Bytecode
 
-type HeldAt zecs.Entity
-type HoldsToken zecs.Entity
+type HeldAt ocm.Entity
+type HoldsToken ocm.Entity
 type Empty struct{}
 type Generated struct{}
 type Ptr objects.Object
