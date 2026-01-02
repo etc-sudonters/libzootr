@@ -215,6 +215,7 @@ func lexCloseBrack(l *peruse.StringLexer, state any) peruse.LexFn {
 }
 
 func lexEq(l *peruse.StringLexer, _ any) peruse.LexFn {
+	//lint:ignore SA4000 they have side effects
 	if l.AcceptOneOf("=") && l.AcceptOneOf("=") {
 		return l.Emit(TokenEq)
 	}

@@ -147,7 +147,7 @@ func (this *Rewriter) Rewrite(ast Node) (Node, error) {
 	case String:
 		return this.String(ast, this.Rewrite)
 	default:
-		return nil, CouldNotRewrite{ast, UnknownNode}
+		return nil, CouldNotRewrite{ast, ErrUnknownNode}
 	}
 }
 

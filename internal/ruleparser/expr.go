@@ -115,9 +115,9 @@ type LiteralKind string
 
 const (
 	LiteralBool  LiteralKind = "Boolean"
-	LiteralNum               = "Number"
-	LiteralStr               = "String"
-	LiteralToken             = "Token"
+	LiteralNum   LiteralKind = "Number"
+	LiteralStr   LiteralKind = "String"
+	LiteralToken LiteralKind = "Token"
 )
 
 type (

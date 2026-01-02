@@ -40,18 +40,18 @@ func (vt *ValueTuple) Load(r RowId, cs Columns) {
 	}
 }
 
-var ColumnNotPresent = errors.New("column not present")
-var CouldNotCastColumn = errors.New("could not cast column")
+var ErrColumnNotPresent = errors.New("column not present")
+var ErrCouldNotCastColumn = errors.New("could not cast column")
 
 func Extract[T any](cm ColumnMap) (*T, error) {
 	typ := mirrors.TypeOf[T]()
 	item, exists := cm[typ]
 	if !exists {
-		return nil, fmt.Errorf("%w: '%s'", ColumnNotPresent, typ.Name())
+		return nil, fmt.Errorf("%w: '%s'", ErrColumnNotPresent, typ.Name())
 	}
 	t, casted := item.(T)
 	if !casted {
-		return nil, fmt.Errorf("%w: '%s'", CouldNotCastColumn, typ.Name())
+		return nil, fmt.Errorf("%w: '%s'", ErrCouldNotCastColumn, typ.Name())
 	}
 	return &t, nil
 }

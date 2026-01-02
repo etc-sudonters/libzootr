@@ -48,9 +48,9 @@ func (this SourceKind) AsSymbolKind() symbols.Kind {
 
 const (
 	_             SourceKind = ""
-	SourceCheck              = "SourceCheck"
-	SourceEvent              = "SourceEvent"
-	SourceTransit            = "SourceTransit"
+	SourceCheck   SourceKind = "SourceCheck"
+	SourceEvent   SourceKind = "SourceEvent"
+	SourceTransit SourceKind = "SourceTransit"
 )
 
 type CompiledSource struct {

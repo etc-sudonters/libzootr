@@ -30,7 +30,7 @@ func WithBucketsFor(i uint32) Bitset {
 	return New(Buckets(i))
 }
 
-func FromRaw(parts []uint32) Bitset {
+func FromRaw(parts ...uint32) Bitset {
 	var b Bitset
 	b.buckets = parts
 	return b

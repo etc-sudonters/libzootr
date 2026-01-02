@@ -149,7 +149,7 @@ func TestDifference(t *testing.T) {
 
 func TestLength(t *testing.T) {
 	b := Bitset{}
-	r := rand.New(rng.NewXoshiro256PPFromU32(0xbf58476d1ce4e5b9))
+	r := rand.New(rng.NewXoshiro256PPFromU64(0xbf58476d1ce4e5b9))
 	for range 5000 {
 		for !b.Set(r.Uint32N(math.MaxUint16)) {
 		}

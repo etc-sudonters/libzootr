@@ -3,7 +3,6 @@ package query
 import (
 	"errors"
 	"fmt"
-	"math"
 	"reflect"
 	"sudonters/libzootr/internal/bundle"
 	"sudonters/libzootr/internal/skelly/bitset32"
@@ -19,10 +18,6 @@ var _ Engine = (*engine)(nil)
 var ErrInvalidQuery = errors.New("query is not supported")
 var ErrColumnExists = errors.New("column exists already")
 var ErrColumnNotExist = errors.New("column does not exist")
-
-func errNotExist(t reflect.Type) error {
-	return fmt.Errorf("%w: %s", ErrColumnNotExist, t.Name())
-}
 
 func errExists(t reflect.Type) error {
 	return fmt.Errorf("%w: %s", ErrColumnExists, t.Name())
@@ -214,14 +209,6 @@ func (e engine) Retrieve(b Query) (bundle.Interface, error) {
 	}
 
 	return bundle.Bundle(fill, columns)
-}
-
-func saturatedSet(numBuckets uint32) bitset32.Bitset {
-	buckets := make([]uint32, numBuckets)
-	for i := range buckets {
-		buckets[i] = math.MaxUint32
-	}
-	return bitset32.FromRaw(buckets)
 }
 
 func (e *engine) SetValues(r table.RowId, vs table.Values) error {

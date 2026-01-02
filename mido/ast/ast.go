@@ -13,15 +13,15 @@ type CompareOp uint8
 
 const (
 	_              Kind = ""
-	KindAnyOf           = "anyof"
-	KindBool            = "bool"
-	KindCompare         = "compare"
-	KindEvery           = "every"
-	KindIdentifier      = "identifer"
-	KindInvert          = "invert"
-	KindInvoke          = "invoke"
-	KindNumber          = "number"
-	KindString          = "string"
+	KindAnyOf      Kind = "anyof"
+	KindBool       Kind = "bool"
+	KindCompare    Kind = "compare"
+	KindEvery      Kind = "every"
+	KindIdentifier Kind = "identifer"
+	KindInvert     Kind = "invert"
+	KindInvoke     Kind = "invoke"
+	KindNumber     Kind = "number"
+	KindString     Kind = "string"
 
 	CompareEq = 1
 	CompareNq = 2

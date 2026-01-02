@@ -113,11 +113,11 @@ type rotatingbuffer struct {
 	closed bool
 }
 
-var bufferClosedErr = errors.New("buffer already closed")
+var errBufferClosed = errors.New("buffer already closed")
 
 func (this *rotatingbuffer) Write(b []byte) (int, error) {
 	if this.closed {
-		return 0, bufferClosedErr
+		return 0, errBufferClosed
 	}
 	if this.err != nil {
 		return 0, this.err

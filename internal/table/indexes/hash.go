@@ -7,11 +7,6 @@ import (
 
 type hashbitmap[T comparable] map[T]bitset32.Bitset
 
-func (h hashbitmap[T]) isset(key T, which uint32) bool {
-	members := h.membersetfor(key)
-	return members.IsSet(which)
-}
-
 func (h hashbitmap[T]) set(key T, which uint32) {
 	members := h.membersetfor(key)
 	members.Set(which)

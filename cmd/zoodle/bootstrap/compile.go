@@ -23,7 +23,7 @@ func parseall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
 
 		parsed, err := codegen.Parse(string(source))
 		PanicWhenErr(err)
-		entity.Attach(magicbean.RuleParsed{parsed})
+		entity.Attach(magicbean.RuleParsed{Node: parsed})
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func optimizeall(ocm *zecs.Ocm, codegen *mido.CodeGen) error {
 			optimizer.SetCurrentLocation(codegen.Context, string(parent.Values[0].(magicbean.Name)))
 			optimized, optimizeErr := codegen.Optimize(parsed.Node)
 			PanicWhenErr(optimizeErr)
-			entity.Attach(magicbean.RuleOptimized{optimized})
+			entity.Attach(magicbean.RuleOptimized{Node: optimized})
 		}
 	}
 

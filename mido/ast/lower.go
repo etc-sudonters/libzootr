@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	UnknownNode     = errors.New("unknown node")
-	UnknownOperator = errors.New("unknown operator")
-	UnknownLiteral  = errors.New("unknown literal type")
+	ErrUnknownNode     = errors.New("unknown node")
+	ErrUnknownOperator = errors.New("unknown operator")
+	ErrUnknownLiteral  = errors.New("unknown literal type")
 
 	compareOps = map[ruleparser.BinOpKind]CompareOp{
 		ruleparser.BinOpEq:    CompareEq,
@@ -61,7 +61,7 @@ func Lower(tbl *symbols.Table, node ruleparser.Tree) (Node, error) {
 				Op:  op,
 			}, nil
 		default:
-			return nil, CouldNotLowerTree{node, UnknownOperator}
+			return nil, CouldNotLowerTree{node, ErrUnknownOperator}
 		}
 	case *ruleparser.BoolOp:
 		switch node.Op {
@@ -82,7 +82,7 @@ func Lower(tbl *symbols.Table, node ruleparser.Tree) (Node, error) {
 			anyOf := AnyOf{lhs, rhs}
 			return anyOf.Flatten(), nil
 		default:
-			return nil, CouldNotLowerTree{node, UnknownOperator}
+			return nil, CouldNotLowerTree{node, ErrUnknownOperator}
 		}
 	case *ruleparser.Call:
 		var invoke Invoke
@@ -128,7 +128,7 @@ func Lower(tbl *symbols.Table, node ruleparser.Tree) (Node, error) {
 		case string:
 			return String(value), nil
 		default:
-			return nil, CouldNotLowerTree{node, UnknownLiteral}
+			return nil, CouldNotLowerTree{node, ErrUnknownLiteral}
 		}
 	case *ruleparser.Subscript:
 		if target, isIdent := node.Target.(*ruleparser.Identifier); isIdent && target.Value == "skipped_trials" {
@@ -149,10 +149,10 @@ func Lower(tbl *symbols.Table, node ruleparser.Tree) (Node, error) {
 			}
 			return Invert{body}, nil
 		default:
-			return nil, CouldNotLowerTree{node, UnknownOperator}
+			return nil, CouldNotLowerTree{node, ErrUnknownOperator}
 		}
 	}
-	return nil, CouldNotLowerTree{node, UnknownNode}
+	return nil, CouldNotLowerTree{node, ErrUnknownNode}
 }
 
 func createCall(tbl *symbols.Table, name string, args ...ruleparser.Tree) (Node, error) {
@@ -172,14 +172,4 @@ func createCall(tbl *symbols.Table, name string, args ...ruleparser.Tree) (Node,
 	}
 
 	return invoke, err
-}
-
-func isSetting(tbl *symbols.Table, node Node) bool {
-	switch node := node.(type) {
-	case Identifier:
-		sym := tbl.LookUpByIndex(node.AsIndex())
-		return sym.Kind == symbols.SETTING
-	default:
-		return false
-	}
 }

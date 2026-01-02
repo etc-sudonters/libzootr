@@ -1,7 +1,6 @@
 package files
 
 import (
-	"errors"
 	"io/fs"
 	"os"
 )
@@ -17,7 +16,6 @@ type OpenFS interface {
 	OpenFile(name string, flag int, perm fs.FileMode) (WriteableFile, error)
 }
 
-var memFileClosedErr = errors.New("...")
 var OsFS OpenFS = &osfs{}
 
 type osfs struct{}

@@ -18,15 +18,11 @@ jobs:
           go-version-file: "go.mod"
       - shell: bash
         run: |
-          go install golang.org/x/lint/golint@latest || exit 2 
           go install honnef.co/go/tools/cmd/staticcheck@latest || exit 2
           exec go vet ./... -c=5
       - shell: bash
         if: ${{ !cancelled() }}
         run: exec staticcheck ./...
-      - shell: bash
-        if: ${{ !cancelled() }}
-        run: exec golint ./...
       - shell: bash
         if: ${{ !cancelled() }}
         run: exec go test -race -vet=off ./...

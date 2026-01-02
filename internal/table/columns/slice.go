@@ -37,8 +37,6 @@ func SizedSlice(size uint32) *Slice {
  * empty rows in the slice, they are left `nil`.
  */
 type Slice struct {
-	id         table.ColumnId
-	typ        reflect.Type
 	components []table.Value
 	members    *bitset32.Bitset
 }

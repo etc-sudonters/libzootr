@@ -71,7 +71,6 @@ func TestCanParseComplicated(t *testing.T) {
 			value, err := obj.ReadString()
 			fatalOnErr(t, err)
 			building.property = value
-			break
 		case "nested":
 			arr, err := obj.ReadArray()
 			fatalOnErr(t, err)

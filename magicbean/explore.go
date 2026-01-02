@@ -42,7 +42,7 @@ type Exploration struct {
 
 func (this *Exploration) evaluateRule(bytecode compiler.Bytecode) bool {
 	if len(bytecode.Tape) == 1 {
-		switch bytecode.Tape[0] {
+		switch code.Op(bytecode.Tape[0]) {
 		case code.PUSH_T:
 			return true
 		case code.PUSH_F:

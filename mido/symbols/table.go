@@ -139,20 +139,17 @@ type Index int
 type Kind string
 
 const (
-	_                 Kind = ""
-	BUILT_IN_FUNCTION      = "BUILT_IN_FUNCTION"
-	COMPILER_FUNCTION      = "COMPILER_FUNCTION"
-	FUNCTION               = "FUNCTION"
-	SCRIPTED_FUNC          = "SCRIPTED_FUNC"
-
-	GLOBAL  = "GLOBAL"
-	SETTING = "SETTING"
-	ALIAS   = "ALIAS"
-	LOCAL   = "LOCAL"
-	UNKNOWN = "UNKNOWN"
-
-	REGION    = "REGION"
-	PLACEMENT = "PLACEMENT"
-	TOKEN     = "TOKEN"
-	TRANSIT   = "TRANSIT"
+	BUILT_IN_FUNCTION Kind = "BUILT_IN_FUNCTION"
+	COMPILER_FUNCTION Kind = "COMPILER_FUNCTION"
+	FUNCTION          Kind = "FUNCTION"
+	SCRIPTED_FUNC     Kind = "SCRIPTED_FUNC"
+	GLOBAL            Kind = "GLOBAL"
+	SETTING           Kind = "SETTING"
+	ALIAS             Kind = "ALIAS"
+	LOCAL             Kind = "LOCAL"
+	UNKNOWN           Kind = "UNKNOWN"
+	REGION            Kind = "REGION"
+	PLACEMENT         Kind = "PLACEMENT"
+	TOKEN             Kind = "TOKEN"
+	TRANSIT           Kind = "TRANSIT"
 )

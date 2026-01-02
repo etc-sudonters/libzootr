@@ -47,10 +47,6 @@ func (this settinginline) Identifier(node ast.Identifier, _ ast.Rewriting) (ast.
 		return node, nil
 	}
 
-	if "shuffle_gerudo_fortress_heart_piece" == symbol.Name {
-		_ = symbol.Name
-	}
-
 	reader, exists := this.readers[symbol.Name]
 	if !exists {
 		return node, nil

@@ -12,10 +12,6 @@ type execution struct {
 	stack stack[objects.Object]
 }
 
-func (this *execution) reset() {
-	this.ip = 0
-}
-
 func (this *execution) readu8() uint8 {
 	u8 := code.ReadU8(this.code.Tape[this.ip:])
 	this.ip++
