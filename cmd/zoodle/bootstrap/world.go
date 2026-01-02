@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"sudonters/libzootr/internal/skelly/graph32"
+	"github.com/etc-sudonters/substrate/skelly/graph32"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/zecs"
 )

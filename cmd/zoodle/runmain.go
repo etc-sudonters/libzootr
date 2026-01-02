@@ -6,11 +6,11 @@ import (
 	"math/rand/v2"
 	"path/filepath"
 	"sudonters/libzootr/internal/settings"
-	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/magicbean/tracking"
 
 	"github.com/etc-sudonters/substrate/dontio"
 	"github.com/etc-sudonters/substrate/rng"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"github.com/etc-sudonters/substrate/stageleft"
 
 	"sudonters/libzootr/cmd/zoodle/bootstrap"

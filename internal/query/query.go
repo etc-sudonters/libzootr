@@ -3,9 +3,9 @@ package query
 import (
 	"errors"
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
 	"sudonters/libzootr/internal/bundle"
-	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 	"sudonters/libzootr/internal/table/columns"
 

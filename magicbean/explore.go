@@ -3,9 +3,9 @@ package magicbean
 import (
 	"context"
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
+	"github.com/etc-sudonters/substrate/skelly/graph32"
 	"sudonters/libzootr/internal"
-	"sudonters/libzootr/internal/skelly/bitset32"
-	"sudonters/libzootr/internal/skelly/graph32"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/code"
 	"sudonters/libzootr/mido/compiler"

@@ -2,8 +2,8 @@ package columns
 
 import (
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
-	"sudonters/libzootr/internal/skelly/bitset32"
 	"sudonters/libzootr/internal/table"
 )
 

@@ -3,8 +3,8 @@ package table
 import (
 	"errors"
 	"fmt"
+	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"reflect"
-	"sudonters/libzootr/internal/skelly/bitset32"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 )
