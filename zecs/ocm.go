@@ -3,7 +3,6 @@ package zecs
 import (
 	"errors"
 	"fmt"
-	"sudonters/libzootr/internal/bundle"
 	"sudonters/libzootr/internal/query"
 	"sudonters/libzootr/internal/table"
 )
@@ -12,7 +11,7 @@ type Entity = table.RowId
 type DDL = table.DDL
 type Value = table.Value
 type Values = table.Values
-type RowSet = bundle.Interface
+type RowSet = table.ResultSetIter
 
 func New(tbl *table.Table) Ocm {
 	return Ocm{query.EngineFromTable(tbl)}
@@ -69,7 +68,7 @@ func (this *Q) Execute() (RowSet, error) {
 	return this.set.eng.Retrieve(this.q)
 }
 
-func (this *Q) Rows(yield bundle.RowIter) {
+func (this *Q) Rows(yield table.YieldRow) {
 	rows, err := this.Execute()
 	if err != nil {
 		panic(err)

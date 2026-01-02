@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sudonters/libzootr/internal/bundle"
 	"sudonters/libzootr/internal/table"
 
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
@@ -77,7 +76,7 @@ func (p predicate) admit(row *bitset32.Bitset) bool {
 type Engine interface {
 	CreateQuery() Query
 	InsertRow(vs ...table.Value) (table.RowId, error)
-	Retrieve(b Query) (bundle.Interface, error)
+	Retrieve(b Query) (table.ResultSetIter, error)
 	GetValues(r table.RowId, cs table.ColumnIds) (table.ValueTuple, error)
 	SetValues(r table.RowId, vs table.Values) error
 	UnsetValues(r table.RowId, cs table.ColumnIds) error
@@ -138,7 +137,7 @@ func (e *engine) InsertRow(vs ...table.Value) (table.RowId, error) {
 	return id, nil
 }
 
-func (e engine) Retrieve(b Query) (bundle.Interface, error) {
+func (e engine) Retrieve(b Query) (table.ResultSetIter, error) {
 	q, ok := b.(*query)
 	if !ok {
 		return nil, fmt.Errorf("%T: %w", b, ErrInvalidQuery)
@@ -158,7 +157,7 @@ func (e engine) Retrieve(b Query) (bundle.Interface, error) {
 		columns = append(columns, e.tbl.Cols[col])
 	}
 
-	return bundle.Bundle(fill, columns)
+	return table.IterResultSet(fill, columns)
 }
 
 func (e *engine) SetValues(r table.RowId, vs table.Values) error {
