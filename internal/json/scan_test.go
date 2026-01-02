@@ -114,7 +114,6 @@ func TestCanScanJson(t *testing.T) {
 func TestCanScanJsonAtom(t *testing.T) {
 
 	tests := []singleToken{
-
 		{"{", scanned_obj_open, "{"},
 		{"}", scanned_obj_close, "}"},
 		{"[", scanned_arr_open, "["},
