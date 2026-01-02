@@ -3,38 +3,80 @@ package magicbean
 import (
 	"maps"
 	"slices"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/internal"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/ocm"
 )
 
-func NewPockets(inventory *Inventory, ocm *zecs.Ocm) Pocket {
+func NewPockets(inventory *Inventory, entities *ocm.Entities) Pocket {
 	var pocket Pocket
 	pocket.inventory = inventory
-	pocket.heartPiece = zecs.FindOne(ocm, Name("Piece of Heart"), zecs.With[Token])
-	pocket.scarecrowSong = zecs.FindOne(ocm, Name("Scarecrow Song"), zecs.With[Token])
-	pocket.transcribe = zecs.IndexEntities[OcarinaNote](ocm)
-	pocket.songs = zecs.IndexValue[SongNotes](ocm)
-	pocket.bottles = zecs.EntitiesMatching(ocm, zecs.With[Bottle])
-	pocket.stones = zecs.EntitiesMatching(ocm, zecs.With[Stone])
-	pocket.meds = zecs.EntitiesMatching(ocm, zecs.With[Medallion])
-	pocket.rewards = zecs.EntitiesMatching(ocm, zecs.With[DungeonReward])
+	{
+		heartPiece, heartErr := ocm.FindOne(entities, Name("Piece of Heart"), table.Exists[Token])
+		internal.PanicOnError(heartErr)
+		pocket.heartPiece = heartPiece
+	}
+
+	{
+		scarecrowSong, scarecrowErr := ocm.FindOne(entities, Name("Scarecrow Song"), table.Exists[Token])
+		internal.PanicOnError(scarecrowErr)
+		pocket.scarecrowSong = scarecrowSong
+	}
+
+	{
+		transcribe, transcribeErr := ocm.KeyedEntities[OcarinaNote](entities)
+		internal.PanicOnError(transcribeErr)
+		pocket.transcribe = maps.Collect(transcribe)
+	}
+
+	{
+		songs, songErr := ocm.IndexedComponent[SongNotes](entities)
+		internal.PanicOnError(songErr)
+		pocket.songs = maps.Collect(songs)
+	}
+
+	{
+		bottles, bottleErr := entities.Matching(table.Exists[Bottle])
+		internal.PanicOnError(bottleErr)
+		pocket.bottles = slices.Collect(bottles)
+	}
+
+	{
+		stones, stoneErr := entities.Matching(table.Exists[Stone])
+		internal.PanicOnError(stoneErr)
+		pocket.stones = slices.Collect(stones)
+	}
+
+	{
+		meds, medErr := entities.Matching(table.Exists[Medallion])
+		internal.PanicOnError(medErr)
+		pocket.meds = slices.Collect(meds)
+	}
+
+	{
+		rewards, rewardErr := entities.Matching(table.Exists[DungeonReward])
+		internal.PanicOnError(rewardErr)
+		pocket.rewards = slices.Collect(rewards)
+	}
+
 	pocket.notes = slices.Collect(maps.Values(pocket.transcribe))
 	return pocket
 }
 
 type Pocket struct {
 	inventory  *Inventory
-	transcribe map[OcarinaNote]zecs.Entity
-	songs      map[zecs.Entity]SongNotes
+	transcribe map[OcarinaNote]ocm.Entity
+	songs      map[ocm.Entity]SongNotes
 
-	heartPiece, scarecrowSong             zecs.Entity
-	bottles, stones, meds, rewards, notes []zecs.Entity
+	heartPiece, scarecrowSong             ocm.Entity
+	bottles, stones, meds, rewards, notes []ocm.Entity
 }
 
-func (this Pocket) Has(entity zecs.Entity, n float64) bool {
+func (this Pocket) Has(entity ocm.Entity, n float64) bool {
 	return this.inventory.Count(entity) >= n
 }
 
-func (this Pocket) HasEvery(entities []zecs.Entity) bool {
+func (this Pocket) HasEvery(entities []ocm.Entity) bool {
 	for _, entity := range entities {
 		if !this.Has(entity, 1) {
 			return false
@@ -43,7 +85,7 @@ func (this Pocket) HasEvery(entities []zecs.Entity) bool {
 	return true
 }
 
-func (this Pocket) HasAny(entities []zecs.Entity) bool {
+func (this Pocket) HasAny(entities []ocm.Entity) bool {
 	for _, entity := range entities {
 		if this.Has(entity, 1) {
 			return true
@@ -74,7 +116,7 @@ func (this Pocket) HasHearts(n float64) bool {
 	return hearts >= n
 }
 
-func (this Pocket) HasAllNotes(entity zecs.Entity) bool {
+func (this Pocket) HasAllNotes(entity ocm.Entity) bool {
 	if entity == this.scarecrowSong {
 		return this.inventory.Sum(this.notes) >= 2
 	}
@@ -84,7 +126,7 @@ func (this Pocket) HasAllNotes(entity zecs.Entity) bool {
 		panic("not a song!")
 	}
 	notes := []OcarinaNote(song)
-	transcript := make([]zecs.Entity, len(notes))
+	transcript := make([]ocm.Entity, len(notes))
 	for i, note := range notes {
 		entity, exists := this.transcribe[note]
 		if !exists {

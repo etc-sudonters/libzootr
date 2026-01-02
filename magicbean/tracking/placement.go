@@ -2,11 +2,11 @@ package tracking
 
 import (
 	"sudonters/libzootr/magicbean"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table/ocm"
 )
 
 type Placement struct {
-	zecs.Proxy
+	ocm.Proxy
 	name magicbean.Name
 }
 

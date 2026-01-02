@@ -2,7 +2,7 @@ package indexes
 
 import (
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
-	"sudonters/libzootr/internal/table"
+	"sudonters/libzootr/table"
 )
 
 type hashbitmap[T comparable] map[T]bitset32.Bitset

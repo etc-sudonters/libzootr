@@ -15,9 +15,9 @@ See: [IceArrowVM notes](./notes/icearrow.md)
 ## Storage
 
 All of this used to be a big ol `map[reflect.Type]map[int][]interface{}` but
-now `internal/table` and `internal/query` form the heart of this system.
+now `table` forms the heart of this system.
 
-`internal/table` is columnar-esque storage system. The table is divided into
+`table` is columnar-esque storage system. The table is divided into
 independent columns that store components. A component is essentially any type
 that is used to describe a row. A row is a collection of column entries joined
 by a common rowid. There is no fixed schema for a row, rather projections are
@@ -38,7 +38,7 @@ specific characteristics. This falls back to a column scan and typically
 `reflect.DeepEqual` if an index isn't present on a scanned column. Every column
 effectively has a bitset index tracking membership.
 
-`internal/query` provides some abstraction over the table, primarily it
+`table` provides some abstraction over the table, primarily it
 provides an interface for gathering columns from the table and iterating over
 the matching rows. For a row to match it must:
 
@@ -49,13 +49,6 @@ Rows are not matched by any particular property of its column value -- that is
 handled by the similar `Engine.Lookup` method. Rather all that matters is if a
 column has a value for a row or not.
 
-`query.Engine` also provides facilities for creating columns, inserting and
-removing rows from columns, and most importantly provides a mapping between
-types and column ids. `table.Table` doesn't make efforts to ensure its storing
-an appropriate type in a column it just adds the value to specified
-column[^fn2].
-
-`internal/bundle` provides iterators over `query.Engine` queries and lookups.
 
 ### Pending
 
@@ -217,9 +210,6 @@ shouldn't at least).[^fn8]
 
 [^fn1]: Note this means the length of the array is _at least_ the highest rowid
     _ever_ tracked by the column
-
-[^fn2]: This is pretty intentional since there should never be an incorrect
-    placement when operating the table via the query interface.
 
 [^fn3]: OOTR distinguishes between checks and events however I haven't found
     any benefit for this yet.

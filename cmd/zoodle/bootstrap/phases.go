@@ -11,7 +11,8 @@ import (
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/objects"
 	"sudonters/libzootr/mido/optimizer"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/ocm"
 )
 
 func PanicWhenErr(err error) {
@@ -20,53 +21,54 @@ func PanicWhenErr(err error) {
 	}
 }
 
-func Phase1_InitializeStorage(ddl []zecs.DDL) zecs.Ocm {
-	ocm, err := zecs.New()
-	PanicWhenErr(err)
-	PanicWhenErr(zecs.Apply(&ocm, staticddl()))
-	return ocm
+func Phase1_InitializeStorage(ddl []table.DDL) (*table.Table, *ocm.Entities) {
+	ddl = slices.Concat(ddl, staticddl(), ocm.DDL())
+	tbl, tblErr := table.FromDDL(ddl...)
+	PanicWhenErr(tblErr)
+	entities := ocm.NewEntities(tbl)
+	return tbl, entities
 }
 
-func Phase2_ImportFromFiles(ctx context.Context, fs fs.FS, ocm *zecs.Ocm, set *tracking.Set, paths LoadPaths) error {
-	PanicWhenErr(storeScripts(ctx, fs, ocm, paths))
+func Phase2_ImportFromFiles(ctx context.Context, fs fs.FS, entities *ocm.Entities, set *tracking.Set, paths LoadPaths) error {
+	PanicWhenErr(storeScripts(ctx, fs, entities, paths))
 	PanicWhenErr(storeTokens(ctx, fs, set.Tokens, paths))
 	PanicWhenErr(storePlacements(ctx, fs, set.Nodes, set.Tokens, paths))
 	PanicWhenErr(storeRelations(ctx, fs, set.Nodes, set.Tokens, paths))
 	return nil
 }
 
-func Phase3_ConfigureCompiler(ocm *zecs.Ocm, theseSettings *settings.Zootr, options ...mido.ConfigureCompiler) mido.CompileEnv {
+func Phase3_ConfigureCompiler(entities *ocm.Entities, theseSettings *settings.Zootr, options ...mido.ConfigureCompiler) mido.CompileEnv {
 	defaults := []mido.ConfigureCompiler{
 		mido.CompilerDefaults(),
 		func(env *mido.CompileEnv) {
 			env.Optimize.AddOptimizer(func(env *mido.CompileEnv) ast.Rewriter {
 				return optimizer.InlineSettings(theseSettings, env.Symbols)
 			})
-			PanicWhenErr(loadsymbols(ocm, env.Symbols))
-			PanicWhenErr(loadscripts(ocm, env))
-			PanicWhenErr(aliassymbols(ocm, env.Symbols))
+			PanicWhenErr(loadsymbols(entities, env.Symbols))
+			PanicWhenErr(loadscripts(entities, env))
+			PanicWhenErr(aliassymbols(entities, env.Symbols))
 		},
 		installCompilerFunctions(theseSettings),
-		installConnectionGenerator(ocm),
+		installConnectionGenerator(entities),
 		mido.WithBuiltInFunctionDefs(func(*mido.CompileEnv) []objects.BuiltInFunctionDef {
 			return magicbean.CreateBuiltInDefs()
 		}),
 		func(env *mido.CompileEnv) {
-			createptrs(ocm, env.Symbols, env.Objects)
+			createptrs(entities, env.Symbols, env.Objects)
 		},
 	}
 	defaults = slices.Concat(defaults, options)
 	return mido.NewCompileEnv(defaults...)
 }
 
-func Phase4_Compile(ocm *zecs.Ocm, compiler *mido.CodeGen) error {
-	PanicWhenErr(parseall(ocm, compiler))
-	PanicWhenErr(optimizeall(ocm, compiler))
-	PanicWhenErr(compileall(ocm, compiler))
+func Phase4_Compile(entities *ocm.Entities, compiler *mido.CodeGen) error {
+	PanicWhenErr(parseall(entities, compiler))
+	PanicWhenErr(optimizeall(entities, compiler))
+	PanicWhenErr(compileall(entities, compiler))
 	return nil
 }
 
-func Phase5_CreateWorld(ocm *zecs.Ocm, settings *settings.Zootr, objects objects.Table) magicbean.ExplorableWorld {
-	xplore := explorableworldfrom(ocm)
+func Phase5_CreateWorld(entities *ocm.Entities, settings *settings.Zootr, objects objects.Table) magicbean.ExplorableWorld {
+	xplore := explorableworldfrom(entities)
 	return xplore
 }

@@ -1,27 +1,27 @@
 package magicbean
 
 import (
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table/ocm"
 )
 
 func NewInventory() Inventory {
-	return Inventory{make(map[zecs.Entity]float64)}
+	return Inventory{make(map[ocm.Entity]float64)}
 }
 
 type Inventory struct {
-	onhand map[zecs.Entity]float64
+	onhand map[ocm.Entity]float64
 }
 
-func (this *Inventory) CollectOne(entity zecs.Entity) {
+func (this *Inventory) CollectOne(entity ocm.Entity) {
 	this.Collect(entity, 1)
 }
 
-func (this *Inventory) Collect(entity zecs.Entity, n float64) {
+func (this *Inventory) Collect(entity ocm.Entity, n float64) {
 	has := this.onhand[entity]
 	this.onhand[entity] = has + n
 }
 
-func (this *Inventory) Remove(entity zecs.Entity, n float64) float64 {
+func (this *Inventory) Remove(entity ocm.Entity, n float64) float64 {
 	has := this.onhand[entity]
 
 	switch {
@@ -41,11 +41,11 @@ func (this *Inventory) Remove(entity zecs.Entity, n float64) float64 {
 	}
 }
 
-func (this *Inventory) Count(entity zecs.Entity) float64 {
+func (this *Inventory) Count(entity ocm.Entity) float64 {
 	return this.onhand[entity]
 }
 
-func (this *Inventory) Sum(entities []zecs.Entity) float64 {
+func (this *Inventory) Sum(entities []ocm.Entity) float64 {
 	var total float64
 
 	for _, entity := range entities {

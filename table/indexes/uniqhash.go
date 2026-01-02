@@ -2,7 +2,7 @@ package indexes
 
 import (
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
-	"sudonters/libzootr/internal/table"
+	"sudonters/libzootr/table"
 
 	"github.com/etc-sudonters/substrate/mirrors"
 )

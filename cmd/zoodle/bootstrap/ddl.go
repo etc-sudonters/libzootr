@@ -1,33 +1,32 @@
 package bootstrap
 
 import (
-	"sudonters/libzootr/internal/table"
-	"sudonters/libzootr/internal/table/columns"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/mido/symbols"
-	"sudonters/libzootr/zecs"
+	"sudonters/libzootr/table"
+	"sudonters/libzootr/table/columns"
 )
 
-func sizedslice[T zecs.Value](size uint32) zecs.DDL {
+func sizedslice[T table.Value](size uint32) table.DDL {
 	return func() *table.ColumnBuilder {
 		return columns.SizedSliceColumn[T](size)
 	}
 }
 
-func sizedbit[T zecs.Value](size uint32) zecs.DDL {
+func sizedbit[T table.Value](size uint32) table.DDL {
 	return func() *table.ColumnBuilder {
 		return columns.SizedBitColumnOf[T](size)
 	}
 }
 
-func sizedhash[T zecs.Value](capacity uint32) zecs.DDL {
+func sizedhash[T table.Value](capacity uint32) table.DDL {
 	return func() *table.ColumnBuilder {
 		return columns.SizedHashMapColumn[T](capacity)
 	}
 }
 
-func staticddl() []zecs.DDL {
-	return []zecs.DDL{
+func staticddl() []table.DDL {
+	return []table.DDL{
 		sizedslice[magicbean.Name](9000),
 		sizedbit[magicbean.Placement](5000),
 		sizedhash[symbols.Kind](5000),

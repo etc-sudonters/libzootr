@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"math/rand/v2"
 	"path/filepath"
+	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/magicbean/tracking"
 
@@ -49,21 +50,23 @@ func runMain(ctx context.Context, std dontio.Std, opts cliOptions, fs fs.FS) sta
 }
 
 func setup(ctx context.Context, fs fs.FS, paths bootstrap.LoadPaths, settings *settings.Zootr) (generation magicbean.Generation) {
-	ocm := bootstrap.Phase1_InitializeStorage(nil)
-	trackSet := tracking.NewTrackingSet(&ocm)
-	bootstrap.PanicWhenErr(bootstrap.Phase2_ImportFromFiles(ctx, fs, &ocm, &trackSet, paths))
+	tbl, entities := bootstrap.Phase1_InitializeStorage(nil)
+	_ = tbl
+	trackSet, trackingErr := tracking.NewTrackingSet(entities)
+	internal.PanicOnError(trackingErr)
+	bootstrap.PanicWhenErr(bootstrap.Phase2_ImportFromFiles(ctx, fs, entities, &trackSet, paths))
 
-	compileEnv := bootstrap.Phase3_ConfigureCompiler(&ocm, settings)
+	compileEnv := bootstrap.Phase3_ConfigureCompiler(entities, settings)
 
 	codegen := mido.Compiler(&compileEnv)
 
 	bootstrap.PanicWhenErr(bootstrap.Phase4_Compile(
-		&ocm, &codegen,
+		entities, &codegen,
 	))
 
-	world := bootstrap.Phase5_CreateWorld(&ocm, settings, objects.TableFrom(compileEnv.Objects))
+	world := bootstrap.Phase5_CreateWorld(entities, settings, objects.TableFrom(compileEnv.Objects))
 
-	generation.Ocm = ocm
+	generation.Entities = entities
 	generation.World = world
 	generation.Objects = objects.TableFrom(compileEnv.Objects)
 	generation.Inventory = magicbean.NewInventory()
