@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sudonters/libzootr/internal/ruleparser"
+	"sudonters/libzootr/ruleparser"
 	"sudonters/libzootr/mido/symbols"
 )
 

@@ -3,7 +3,7 @@ package optimizer
 import (
 	"fmt"
 	"strings"
-	"sudonters/libzootr/internal/ruleparser"
+	"sudonters/libzootr/ruleparser"
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/symbols"
 

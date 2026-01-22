@@ -1,9 +1,9 @@
 package magicbean
 
 import (
+	"github.com/etc-sudonters/substrate/slipup"
 	"maps"
 	"slices"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/table"
 	"sudonters/libzootr/table/ocm"
 )
@@ -13,49 +13,49 @@ func NewPockets(inventory *Inventory, entities *ocm.Entities) Pocket {
 	pocket.inventory = inventory
 	{
 		heartPiece, heartErr := ocm.FindOne(entities, Name("Piece of Heart"), table.Exists[Token])
-		internal.PanicOnError(heartErr)
+		slipup.PanicOnError(heartErr)
 		pocket.heartPiece = heartPiece
 	}
 
 	{
 		scarecrowSong, scarecrowErr := ocm.FindOne(entities, Name("Scarecrow Song"), table.Exists[Token])
-		internal.PanicOnError(scarecrowErr)
+		slipup.PanicOnError(scarecrowErr)
 		pocket.scarecrowSong = scarecrowSong
 	}
 
 	{
 		transcribe, transcribeErr := ocm.KeyedEntities[OcarinaNote](entities)
-		internal.PanicOnError(transcribeErr)
+		slipup.PanicOnError(transcribeErr)
 		pocket.transcribe = maps.Collect(transcribe)
 	}
 
 	{
 		songs, songErr := ocm.IndexedComponent[SongNotes](entities)
-		internal.PanicOnError(songErr)
+		slipup.PanicOnError(songErr)
 		pocket.songs = maps.Collect(songs)
 	}
 
 	{
 		bottles, bottleErr := entities.Matching(table.Exists[Bottle])
-		internal.PanicOnError(bottleErr)
+		slipup.PanicOnError(bottleErr)
 		pocket.bottles = slices.Collect(bottles)
 	}
 
 	{
 		stones, stoneErr := entities.Matching(table.Exists[Stone])
-		internal.PanicOnError(stoneErr)
+		slipup.PanicOnError(stoneErr)
 		pocket.stones = slices.Collect(stones)
 	}
 
 	{
 		meds, medErr := entities.Matching(table.Exists[Medallion])
-		internal.PanicOnError(medErr)
+		slipup.PanicOnError(medErr)
 		pocket.meds = slices.Collect(meds)
 	}
 
 	{
 		rewards, rewardErr := entities.Matching(table.Exists[DungeonReward])
-		internal.PanicOnError(rewardErr)
+		slipup.PanicOnError(rewardErr)
 		pocket.rewards = slices.Collect(rewards)
 	}
 

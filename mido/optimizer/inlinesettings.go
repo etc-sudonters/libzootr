@@ -2,7 +2,7 @@ package optimizer
 
 import (
 	"fmt"
-	"sudonters/libzootr/internal"
+	"github.com/etc-sudonters/substrate/slipup"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/symbols"
@@ -19,19 +19,19 @@ func InlineSettings(these *settings.Zootr, symbols *symbols.Table) ast.Rewriter 
 
 func str(these *settings.Zootr, name string) ast.Node {
 	value, err := these.String(name)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 	return ast.String(value)
 }
 
 func f64(these *settings.Zootr, name string) ast.Node {
 	value, err := these.Float64(name)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 	return ast.Number(value)
 }
 
 func boolean(these *settings.Zootr, name string) ast.Node {
 	value, err := these.Bool(name)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 	return ast.Boolean(value)
 }
 

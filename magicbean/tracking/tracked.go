@@ -2,8 +2,8 @@ package tracking
 
 import (
 	"fmt"
+	"github.com/etc-sudonters/substrate/slipup"
 	"slices"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/table"
 	"sudonters/libzootr/table/ocm"
 )
@@ -59,6 +59,6 @@ func (this *Tracked[K]) MustGet(key K) ocm.Proxy {
 	}
 
 	proxy, err := this.parent.Proxy(entity)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 	return proxy
 }

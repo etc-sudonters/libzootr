@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"slices"
-	"sudonters/libzootr/cmd/zoodle/bootstrap"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
@@ -17,6 +15,7 @@ import (
 
 	"github.com/etc-sudonters/substrate/dontio"
 	"github.com/etc-sudonters/substrate/skelly/shufflequeue"
+	"github.com/etc-sudonters/substrate/slipup"
 )
 
 type Age bool
@@ -68,7 +67,7 @@ func PtrsMatching(entities *ocm.Entities, query ...table.Q) []objects.Object {
 	q := []table.Q{table.Load[magicbean.Ptr], table.Exists[magicbean.Token]}
 	q = slices.Concat(q, query)
 	rows, err := entities.Query(q...)
-	bootstrap.PanicWhenErr(err)
+	slipup.PanicOnError(err)
 	ptrs := make([]objects.Object, 0, rows.Len())
 
 	for _, tup := range rows.All {
@@ -105,7 +104,7 @@ func CollectStartingItems(generation *magicbean.Generation) {
 	}
 
 	tokens, err := tracking.NewTokens(entities)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 
 	if these.Locations.OpenDoorOfTime {
 		collect(tokens.MustGet("Time Travel"), 1)
@@ -124,7 +123,7 @@ func CollectStartingItems(generation *magicbean.Generation) {
 	for _, collect := range starting {
 		proxy, _ := entities.Proxy(collect.entity)
 		values, err := proxy.Values(table.ColumnIdFor[magicbean.Name])
-		internal.PanicOnError(err)
+		slipup.PanicOnError(err)
 		fmt.Printf("starting with %f %s\n", collect.qty, values.Values[0].(magicbean.Name))
 		generation.Inventory.Collect(collect.entity, collect.qty)
 	}
@@ -132,10 +131,10 @@ func CollectStartingItems(generation *magicbean.Generation) {
 
 func OneOfRandomly(entities *ocm.Entities, rng *rand.Rand, query ...table.Q) ocm.Entity {
 	matched, err := entities.Matching(query...)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 
 	matching := shufflequeue.CreateShuffledFrom(rng, slices.Collect(matched))
 	randomly, err := matching.Dequeue()
-	bootstrap.PanicWhenErr(err)
+	slipup.PanicOnError(err)
 	return *randomly
 }

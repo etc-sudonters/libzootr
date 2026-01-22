@@ -3,7 +3,7 @@ package mido
 import (
 	"errors"
 	"fmt"
-	"sudonters/libzootr/internal/ruleparser"
+	"sudonters/libzootr/ruleparser"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/mido/ast"
 	"sudonters/libzootr/mido/compiler"

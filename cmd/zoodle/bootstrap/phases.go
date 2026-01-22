@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"github.com/etc-sudonters/substrate/slipup"
 	"io/fs"
 	"slices"
 	"sudonters/libzootr/internal/settings"
@@ -15,25 +16,19 @@ import (
 	"sudonters/libzootr/table/ocm"
 )
 
-func PanicWhenErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func Phase1_InitializeStorage(ddl []table.DDL) (*table.Table, *ocm.Entities) {
 	ddl = slices.Concat(ddl, staticddl(), ocm.DDL())
 	tbl, tblErr := table.FromDDL(ddl...)
-	PanicWhenErr(tblErr)
+	slipup.PanicOnError(tblErr)
 	entities := ocm.NewEntities(tbl)
 	return tbl, entities
 }
 
 func Phase2_ImportFromFiles(ctx context.Context, fs fs.FS, entities *ocm.Entities, set *tracking.Set, paths LoadPaths) error {
-	PanicWhenErr(storeScripts(ctx, fs, entities, paths))
-	PanicWhenErr(storeTokens(ctx, fs, set.Tokens, paths))
-	PanicWhenErr(storePlacements(ctx, fs, set.Nodes, set.Tokens, paths))
-	PanicWhenErr(storeRelations(ctx, fs, set.Nodes, set.Tokens, paths))
+	slipup.PanicOnError(storeScripts(ctx, fs, entities, paths))
+	slipup.PanicOnError(storeTokens(ctx, fs, set.Tokens, paths))
+	slipup.PanicOnError(storePlacements(ctx, fs, set.Nodes, set.Tokens, paths))
+	slipup.PanicOnError(storeRelations(ctx, fs, set.Nodes, set.Tokens, paths))
 	return nil
 }
 
@@ -44,9 +39,9 @@ func Phase3_ConfigureCompiler(entities *ocm.Entities, theseSettings *settings.Zo
 			env.Optimize.AddOptimizer(func(env *mido.CompileEnv) ast.Rewriter {
 				return optimizer.InlineSettings(theseSettings, env.Symbols)
 			})
-			PanicWhenErr(loadsymbols(entities, env.Symbols))
-			PanicWhenErr(loadscripts(entities, env))
-			PanicWhenErr(aliassymbols(entities, env.Symbols))
+			slipup.PanicOnError(loadsymbols(entities, env.Symbols))
+			slipup.PanicOnError(loadscripts(entities, env))
+			slipup.PanicOnError(aliassymbols(entities, env.Symbols))
 		},
 		installCompilerFunctions(theseSettings),
 		installConnectionGenerator(entities),
@@ -62,9 +57,9 @@ func Phase3_ConfigureCompiler(entities *ocm.Entities, theseSettings *settings.Zo
 }
 
 func Phase4_Compile(entities *ocm.Entities, compiler *mido.CodeGen) error {
-	PanicWhenErr(parseall(entities, compiler))
-	PanicWhenErr(optimizeall(entities, compiler))
-	PanicWhenErr(compileall(entities, compiler))
+	slipup.PanicOnError(parseall(entities, compiler))
+	slipup.PanicOnError(optimizeall(entities, compiler))
+	slipup.PanicOnError(compileall(entities, compiler))
 	return nil
 }
 

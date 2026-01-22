@@ -2,12 +2,12 @@ package bootstrap
 
 import (
 	"slices"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/table"
 	"sudonters/libzootr/table/ocm"
 
 	"github.com/etc-sudonters/substrate/skelly/graph32"
+	"github.com/etc-sudonters/substrate/slipup"
 )
 
 func explorableworldfrom(entities *ocm.Entities) magicbean.ExplorableWorld {
@@ -19,13 +19,13 @@ func explorableworldfrom(entities *ocm.Entities) magicbean.ExplorableWorld {
 		table.Load[magicbean.Name],
 		table.Optional[magicbean.RuleSource],
 	)
-	PanicWhenErr(err)
+	slipup.PanicOnError(err)
 
 	world.Edges = make(map[magicbean.Connection]magicbean.ExplorableEdge, rows.Len())
 	world.Graph = graph32.WithCapacity(rows.Len() * 2)
 	directed := graph32.Builder{Graph: &world.Graph}
 	matching, rootsErr := entities.Matching(table.Exists[magicbean.WorldGraphRoot])
-	internal.PanicOnError(rootsErr)
+	slipup.PanicOnError(rootsErr)
 	roots := slices.Collect(matching)
 
 	if len(roots) == 0 {

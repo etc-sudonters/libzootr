@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sudonters/libzootr/importers"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/mido/optimizer"
@@ -140,8 +139,8 @@ func storeScripts(ctx context.Context, fs fs.FS, entities *ocm.Entities, paths L
 			return err
 		}
 		entity, err := entities.CreateEntity()
-		internal.PanicOnError(err)
-		internal.PanicOnError(entity.Attach(
+		slipup.PanicOnError(err)
+		slipup.PanicOnError(entity.Attach(
 			magicbean.ScriptDecl(script.Decl),
 			magicbean.ScriptSource(script.Src),
 			name(optimizer.FastScriptNameFromDecl(script.Decl)),
@@ -263,7 +262,7 @@ func storePlacements(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens
 		place := nodes.Placement(name(location.Name))
 		if location.Default != "" {
 			token, err := tokens.Named(name(location.Default))
-			internal.PanicOnError(err)
+			slipup.PanicOnError(err)
 			place.DefaultToken(token)
 		}
 	}
@@ -289,8 +288,8 @@ func storeRelations(ctx context.Context, fs fs.FS, nodes tracking.Nodes, tokens 
 
 		for event, rule := range relation.Events {
 			token, err := tokens.Named(name(event))
-			internal.PanicOnError(err)
-			internal.PanicOnError(token.Attach(magicbean.Event{}))
+			slipup.PanicOnError(err)
+			slipup.PanicOnError(token.Attach(magicbean.Event{}))
 			placement := nodes.Placement(namef("%s %s", relation.RegionName, event))
 			placement.Fixed(token)
 			edge := region.Has(placement)

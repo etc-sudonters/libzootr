@@ -1,7 +1,6 @@
 package tracking
 
 import (
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/table"
 	"sudonters/libzootr/table/ocm"
@@ -56,15 +55,15 @@ type Transit struct {
 
 func (this Nodes) Region(name name) Region {
 	region, err := this.regions.For(name)
-	internal.PanicOnError(err)
-	internal.PanicOnError(region.Attach(magicbean.Region{}))
+	slipup.PanicOnError(err)
+	slipup.PanicOnError(region.Attach(magicbean.Region{}))
 	return Region{region, name, this}
 }
 
 func (this Nodes) Placement(name name) Placement {
 	place, err := this.placements.For(name)
-	internal.PanicOnError(err)
-	internal.PanicOnError(place.Attach(magicbean.Placement{}))
+	slipup.PanicOnError(err)
+	slipup.PanicOnError(place.Attach(magicbean.Placement{}))
 	return Placement{place, name}
 }
 
@@ -80,7 +79,7 @@ func (this Region) connect(to ocm.Entity, toName name, kind magicbean.EdgeKind) 
 	name := namef("%s -> %s", this.name, toName)
 	directed := directed{From: this.Entity(), To: to}
 	proxy, err := this.parent.transit.For(directed)
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 	transit := Transit{
 		Proxy:  proxy,
 		name:   name,

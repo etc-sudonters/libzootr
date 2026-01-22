@@ -2,10 +2,10 @@ package bootstrap
 
 import (
 	"fmt"
+	"github.com/etc-sudonters/substrate/slipup"
 	"regexp"
 	"slices"
 	"strings"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
@@ -31,7 +31,7 @@ func createptrs(entities *ocm.Entities, syms *symbols.Table, objs *objects.Build
 		table.NotExists[magicbean.Ptr],
 	)
 
-	internal.PanicOnError(err)
+	slipup.PanicOnError(err)
 
 	for ent, tup := range rows.All {
 		kind := tup.Values[0].(symbols.Kind)
@@ -78,12 +78,12 @@ func (this tagging) tagall(entities *ocm.Entities, syms *symbols.Table) {
 	q = slices.Concat(q, this.q)
 	rows, err := entities.Query(q...)
 
-	PanicWhenErr(err)
+	slipup.PanicOnError(err)
 	for ent, tup := range rows.All {
 		entity, _ := entities.Proxy(ent)
 		name := string(tup.Values[0].(name))
 		syms.Declare(name, this.kind)
-		internal.PanicOnError(entity.Attach(this.kind))
+		slipup.PanicOnError(entity.Attach(this.kind))
 	}
 }
 
@@ -95,7 +95,7 @@ func loadscripts(entities *ocm.Entities, env *mido.CompileEnv) error {
 		table.NotExists[magicbean.RuleParsed],
 	)
 
-	PanicWhenErr(rowErr)
+	slipup.PanicOnError(rowErr)
 	decls := make(map[string]string, rows.Len())
 
 	for _, tup := range rows.All {
@@ -104,7 +104,7 @@ func loadscripts(entities *ocm.Entities, env *mido.CompileEnv) error {
 		decls[string(decl)] = string(body)
 	}
 
-	PanicWhenErr(env.BuildScriptedFuncs(decls))
+	slipup.PanicOnError(env.BuildScriptedFuncs(decls))
 
 	for entity, tup := range rows.All {
 		name := tup.Values[0].(name)
@@ -113,7 +113,7 @@ func loadscripts(entities *ocm.Entities, env *mido.CompileEnv) error {
 			panic(fmt.Errorf("somehow scripted func %s is missing, a mystery", name))
 		}
 		p, _ := entities.Proxy(entity)
-		internal.PanicOnError(p.Attach(magicbean.ScriptParsed{Node: script.Body}))
+		slipup.PanicOnError(p.Attach(magicbean.ScriptParsed{Node: script.Body}))
 	}
 
 	return nil
@@ -121,7 +121,7 @@ func loadscripts(entities *ocm.Entities, env *mido.CompileEnv) error {
 
 func aliassymbols(entities *ocm.Entities, syms *symbols.Table) error {
 	rows, err := entities.Query(table.Load[name], table.Exists[magicbean.Token])
-	PanicWhenErr(err)
+	slipup.PanicOnError(err)
 
 	for id, tup := range rows.All {
 		name := string(tup.Values[0].(name))
@@ -134,7 +134,7 @@ func aliassymbols(entities *ocm.Entities, syms *symbols.Table) error {
 			alias := escape(name)
 			syms.Alias(original, alias)
 			proxy, _ := entities.Proxy(id)
-			PanicWhenErr(proxy.Attach(magicbean.AliasingName(alias)))
+			slipup.PanicOnError(proxy.Attach(magicbean.AliasingName(alias)))
 		default:
 			panic(fmt.Errorf("expected to only alias function or token: %s", original))
 		}
@@ -268,9 +268,9 @@ func installConnectionGenerator(entities *ocm.Entities) mido.ConfigureCompiler {
 			var conngen ConnectionGenerator
 			var err error
 			conngen.Nodes, err = tracking.NewNodes(entities)
-			internal.PanicOnError(err)
+			slipup.PanicOnError(err)
 			conngen.Tokens, err = tracking.NewTokens(entities)
-			internal.PanicOnError(err)
+			slipup.PanicOnError(err)
 			conngen.Symbols = ce.Symbols
 			conngen.Objects = ce.Objects
 
@@ -304,7 +304,7 @@ func (this ConnectionGenerator) AddConnectionTo(region string, rule ast.Node) (*
 	}
 
 	token, tokenErr := this.Tokens.Named(tokenName)
-	internal.PanicOnError(tokenErr)
+	slipup.PanicOnError(tokenErr)
 	placement := this.Nodes.Placement(magicbean.NameF("Place%s", suffix))
 
 	placement.Fixed(token)
