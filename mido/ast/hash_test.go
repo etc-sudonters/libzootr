@@ -2,7 +2,7 @@ package ast
 
 import (
 	"hash/fnv"
-	"sudonters/libzootr/internal/ruleparser"
+	"sudonters/libzootr/ruleparser"
 	"sudonters/libzootr/mido/symbols"
 	"testing"
 )
