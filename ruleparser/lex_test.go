@@ -127,7 +127,7 @@ func TestCanLexActualRules(t *testing.T) {
 
 }
 
-func lexUntilEofOrErr(l *peruse.StringLexer, t *testing.T) []peruse.Token {
+func lexUntilEofOrErr(l *peruse.StringLexer, _ *testing.T) []peruse.Token {
 	collected := []peruse.Token{}
 
 	for {

@@ -1,11 +1,13 @@
 package json
 
 import (
-	"iter"
-	"sudonters/libzootr/internal"
-
 	"github.com/etc-sudonters/substrate/slipup"
+	"iter"
 )
+
+func emptySeq2[T1 any, T2 any]() iter.Seq2[T1, T2] {
+	return func(func(T1, T2) bool) {}
+}
 
 type ReadsArray interface {
 	Current() Token
@@ -77,12 +79,12 @@ func ReadStringObject(this ReadsObject, err *error) iter.Seq2[string, string] {
 func ReadNullableStringObject(this ReadsObject, err *error) iter.Seq2[string, string] {
 	switch this.Current().Kind {
 	case NULL:
-		return internal.EmptySeq2[string, string]()
+		return emptySeq2[string, string]()
 	case OBJ_OPEN:
 		return ReadStringObject(this, err)
 	default:
 		*err = slipup.Createf("expected %s or %s but found %s", NULL, OBJ_OPEN, this.Current().Kind)
-		return internal.EmptySeq2[string, string]()
+		return emptySeq2[string, string]()
 	}
 }
 

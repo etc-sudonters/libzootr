@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"errors"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/optimizer"
@@ -61,10 +60,10 @@ func optimizeall(entities *ocm.Entities, codegen *mido.CodeGen) error {
 
 		fromEntity, _ := entities.Proxy(edge.From)
 		parent, parentErr := fromEntity.Values(table.ColumnIdFor[magicbean.Name])
-		PanicWhenErr(parentErr)
+		slipup.PanicOnError(parentErr)
 		optimizer.SetCurrentLocation(codegen.Context, string(parent.Values[0].(magicbean.Name)))
 		optimized, optimizeErr := codegen.Optimize(parsed.Node)
-		PanicWhenErr(optimizeErr)
+		slipup.PanicOnError(optimizeErr)
 		entity.Attach(magicbean.RuleOptimized{Node: optimized})
 	}
 
@@ -89,7 +88,7 @@ func compileall(entities *ocm.Entities, codegen *mido.CodeGen) error {
 		if err != nil {
 			return slipup.Describe(err, "failed while compiling rule")
 		}
-		internal.PanicOnError(entity.Attach(magicbean.RuleCompiled(bytecode)))
+		slipup.PanicOnError(entity.Attach(magicbean.RuleCompiled(bytecode)))
 	}
 
 	return nil

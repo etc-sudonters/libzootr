@@ -35,12 +35,12 @@ func collapseAll[M many](this collapse, into, gather *symbols.Sym, node M, rewri
 }
 
 func (this collapse) Every(node ast.Every, rewrite ast.Rewriting) (ast.Node, error) {
-	many, err := collapseAll[ast.Every](this, this.hasEvery, this.hasAnyOf, node, rewrite)
+	many, err := collapseAll(this, this.hasEvery, this.hasAnyOf, node, rewrite)
 	return many.Flatten().Reduce(), err
 }
 
 func (this collapse) AnyOf(node ast.AnyOf, rewrite ast.Rewriting) (ast.Node, error) {
-	many, err := collapseAll[ast.AnyOf](this, this.hasAnyOf, this.hasEvery, node, rewrite)
+	many, err := collapseAll(this, this.hasAnyOf, this.hasEvery, node, rewrite)
 	return many.Flatten().Reduce(), err
 }
 

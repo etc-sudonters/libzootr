@@ -2,11 +2,9 @@ package json
 
 import (
 	"fmt"
+	"github.com/etc-sudonters/substrate/slipup"
 	"io"
 	"strconv"
-	"sudonters/libzootr/internal"
-
-	"github.com/etc-sudonters/substrate/slipup"
 )
 
 type Reader interface {
@@ -132,7 +130,7 @@ func (this *Parser) Next() bool {
 
 	for {
 		lexeme, err := this.scanner.Next()
-		internal.PanicOnError(err)
+		slipup.PanicOnError(err)
 
 		if lexeme.scanned == scanned_comment {
 			continue

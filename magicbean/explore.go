@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/etc-sudonters/substrate/skelly/bitset32"
 	"github.com/etc-sudonters/substrate/skelly/graph32"
-	"sudonters/libzootr/internal"
 	"sudonters/libzootr/mido"
 	"sudonters/libzootr/mido/code"
 	"sudonters/libzootr/mido/compiler"
@@ -13,6 +12,7 @@ import (
 	"sudonters/libzootr/table/ocm"
 
 	"github.com/etc-sudonters/substrate/dontio"
+	"github.com/etc-sudonters/substrate/slipup"
 )
 
 type ExplorableEdge struct {
@@ -61,7 +61,7 @@ func (this *Exploration) evaluateRule(bytecode compiler.Bytecode) bool {
 
 func (this *Exploration) CanTransit(ctx context.Context, world *ExplorableWorld, from, to graph32.Node) bool {
 	std, nostd := dontio.StdFromContext(ctx)
-	internal.PanicOnError(nostd)
+	slipup.PanicOnError(nostd)
 
 	edge, exists := world.Edge(from, to)
 	if !exists {
@@ -87,7 +87,7 @@ func (this *ExplorableWorld) ExploreAvailableEdges(ctx context.Context, xplr *Ex
 	var results ExplorationResults
 	for current := range nodeiter(xplr.Workset).UntilEmpty {
 		neighbors, err := this.Graph.Successors(current)
-		internal.PanicOnError(err)
+		slipup.PanicOnError(err)
 		neighbors = neighbors.Difference(*xplr.Visited)
 
 		for neighbor := range nodeiter(&neighbors).All {
