@@ -8,11 +8,11 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"sudonters/libzootr/internal/buffers"
-	"sudonters/libzootr/internal/files"
 	"time"
 
+	"github.com/etc-sudonters/substrate/buffers"
 	"github.com/etc-sudonters/substrate/dontio"
+	"github.com/etc-sudonters/substrate/files"
 	"github.com/etc-sudonters/substrate/slipup"
 )
 
