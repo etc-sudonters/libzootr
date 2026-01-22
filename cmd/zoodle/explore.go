@@ -8,7 +8,6 @@ import (
 	"sudonters/libzootr/cmd/zoodle/bootstrap"
 	"sudonters/libzootr/internal"
 	"sudonters/libzootr/internal/settings"
-	"sudonters/libzootr/internal/shufflequeue"
 	"sudonters/libzootr/magicbean"
 	"sudonters/libzootr/magicbean/tracking"
 	"sudonters/libzootr/mido"
@@ -17,6 +16,7 @@ import (
 	"sudonters/libzootr/table/ocm"
 
 	"github.com/etc-sudonters/substrate/dontio"
+	"github.com/etc-sudonters/substrate/skelly/shufflequeue"
 )
 
 type Age bool
@@ -134,7 +134,7 @@ func OneOfRandomly(entities *ocm.Entities, rng *rand.Rand, query ...table.Q) ocm
 	matched, err := entities.Matching(query...)
 	internal.PanicOnError(err)
 
-	matching := shufflequeue.From(rng, slices.Collect(matched))
+	matching := shufflequeue.CreateShuffledFrom(rng, slices.Collect(matched))
 	randomly, err := matching.Dequeue()
 	bootstrap.PanicWhenErr(err)
 	return *randomly
