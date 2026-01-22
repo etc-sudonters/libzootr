@@ -10,7 +10,6 @@ import (
 )
 
 var DumpItems = &DumpedItems{}
-var emptyItem = DumpedItem{}
 
 type DumpedItem struct {
 	Name, Type            string
@@ -35,6 +34,7 @@ type DumpedItems struct{}
 //	}
 func (this *DumpedItems) ImportFrom(ctx ctx, r io.Reader) iter.Seq2[DumpedItem, error] {
 	return func(yield func(DumpedItem, error) bool) {
+		var emptyItem DumpedItem
 		parser := json.ParserFrom(r)
 		items, notItemArray := parser.ReadArray()
 		if notItemArray != nil {

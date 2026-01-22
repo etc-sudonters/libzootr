@@ -12,8 +12,6 @@ type DumpedScript struct {
 	Decl, Src string
 }
 
-var emptyScript = DumpedScript{}
-
 // imports OOTR logic script files
 type DumpedScripts struct{}
 
@@ -34,6 +32,7 @@ var DumpScripts = DumpedScripts{}
 //	}
 func (this *DumpedScripts) ImportFrom(ctx ctx, r io.Reader) iter.Seq2[DumpedScript, error] {
 	return func(yield func(DumpedScript, error) bool) {
+		var emptyScript DumpedScript
 		parser := json.ParserFrom(r)
 		scripts, notScriptObject := parser.ReadObject()
 		if notScriptObject != nil {

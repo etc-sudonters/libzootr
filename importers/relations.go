@@ -24,8 +24,6 @@ type DumpedRelation struct {
 	ProvidesTimeOfDay string
 }
 
-var emptyRelation = DumpedRelation{}
-
 // imports OOTR logic relation files
 type DumpedRelations struct{}
 
@@ -46,6 +44,7 @@ var DumpRelations = DumpedRelations{}
 //	}
 func (this *DumpedRelations) ImportFrom(ctx ctx, r io.Reader) iter.Seq2[DumpedRelation, error] {
 	return func(yield func(DumpedRelation, error) bool) {
+		var emptyRelation DumpedRelation
 		parser := json.ParserFrom(r)
 		relations, notRelationArray := parser.ReadArray()
 		if notRelationArray != nil {

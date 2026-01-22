@@ -9,7 +9,6 @@ import (
 )
 
 var DumpLocations = &DumpedLocations{}
-var emptyLocation = DumpedLocation{}
 
 type DumpedLocation struct {
 	Categories          []string
@@ -34,6 +33,7 @@ type DumpedLocations struct{}
 //	}
 func (this *DumpedLocations) ImportFrom(ctx ctx, r io.Reader) iter.Seq2[DumpedLocation, error] {
 	return func(yield func(DumpedLocation, error) bool) {
+		var emptyLocation DumpedLocation
 		parser := json.ParserFrom(r)
 		locations, notLocationArray := parser.ReadArray()
 		if notLocationArray != nil {

@@ -11,9 +11,9 @@ import (
 	"runtime/debug"
 	"runtime/pprof"
 	"sudonters/libzootr/cmd/cmdlib"
-	"sudonters/libzootr/internal/files"
 
 	"github.com/etc-sudonters/substrate/dontio"
+	"github.com/etc-sudonters/substrate/files"
 	"github.com/etc-sudonters/substrate/stageleft"
 )
 
